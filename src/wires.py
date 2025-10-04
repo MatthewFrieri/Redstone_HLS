@@ -1,5 +1,5 @@
 from litemapy import Region
-from blocks import *
+from const import *
 
 
 class Wire:
@@ -9,7 +9,7 @@ class Wire:
         reg = Region(0, 0, 0, 1, 2, n)
 
         for i in range(n):
-            reg[0, 0, i] = BLUE_WOOL
-            reg[0, 1, i] = REDSTONE
+            reg[0, 0, i] = Block.BLUE_WOOL
+            reg[0, 1, i] = Block.REDSTONE
 
         return reg
