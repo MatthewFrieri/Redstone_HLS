@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List
 from copy import deepcopy
 from litemapy import Region, Schematic
 
@@ -14,7 +13,7 @@ class RegionWrapper(Region):
             raise ValueError("RegionWrapper can not have negative width/height/length.")
 
         super().__init__(0, 0, 0, width, height, length)
-        self.__sub_regions: List[RegionWrapper] = []
+        self.__sub_regions: list[RegionWrapper] = []
 
     def __str__(self) -> str:
         return f"RegionWrapper with dimmensions ({self.width}, {self.height}, {self.length})."
