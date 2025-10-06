@@ -13,8 +13,14 @@ class Block:
     AIR = BlockState("minecraft:air")
 
     RED_WOOL = BlockState("minecraft:red_wool")
-    BLUE_WOOL = BlockState("minecraft:light_blue_wool")
+    LIGHT_BLUE_WOOL = BlockState("minecraft:light_blue_wool")
+    BLUE_WOOL = BlockState("minecraft:blue_wool")
+    CYAN_WOOL = BlockState("minecraft:cyan_wool")
     BLACK_WOOL = BlockState("minecraft:black_wool")
+
+    TARGET = BlockState("minecraft:target")
+    LAMP = BlockState("minecraft:redstone_lamp")
+    FLOOR_LEVER = BlockState("minecraft:lever", face="floor", facing="east")
 
     REDSTONE = BlockState("minecraft:redstone_wire")
 
