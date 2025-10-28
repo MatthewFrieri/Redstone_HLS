@@ -107,7 +107,8 @@ class Lexer:
             case '{':
                 self._add_token(Tok.LBRACE)
             case ';':
-                self._add_token(Tok.SEMICOLON)
+                pass
+                #self._add_token(Tok.SEMICOLON)
             case ',':
                 self._add_token(Tok.COMMA)
             case '.':
@@ -300,8 +301,8 @@ class Lexer:
                                             'E', 'F', 'x', 'z', '?', '_'}:
                         self._advance()
         num = self.source[self.start:self.current]
-        self.tokens.append(Token(kind=Tok.NUMBER, lexeme=num, line=self.line, 
-                                 col=self.col, literal=num, size=size, signed=signed, base=base))
+        self.tokens.append(Token(kind=Tok.NUMBER, lexeme=float(num), line=self.line, 
+                                 col=self.col, literal=float(num), size=size, signed=signed, base=base))
         
 
         

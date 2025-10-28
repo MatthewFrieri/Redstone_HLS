@@ -127,7 +127,7 @@ class Parser:
             self.consume(Tok.RPAREN, 'Expected ")" after expression.')
             return Grouping(expr)
         
-        raise self.error(self.peek(), "Unexpected Expression")
+        raise self.error(token=self.peek(), message="Unexpected Expression")
 
 
 

@@ -5,11 +5,14 @@
 
 import sys
 from pathlib import Path
-from .errors import HAD_ERROR
+from .errors import HAD_ERROR, HAD_RUNTIME_ERROR
 from .token import Tok, Token
 from .parser import Parser
 from .lexer import Lexer
 from .AstPPrinter import AstPrinter
+from .interpreter import Interpreter
+
+interpreter = Interpreter()
 
 
 def main(argv: list[str]) -> None:
@@ -30,6 +33,8 @@ def run_file(path: str) -> None:
     run(source)
     if HAD_ERROR:
         sys.exit(65) #data error
+    if HAD_RUNTIME_ERROR:
+        sys.exit(70)
 
 
 def run_prompt() -> None:
@@ -45,21 +50,14 @@ def run_prompt() -> None:
 
 def run(source: str) -> None:
 
-
     lex=Lexer(source, is_file=False)
     tokens = lex.scan_tokens()
-    print("tokens: ", [t.lexeme for t in tokens])
     p = Parser(tokens=tokens)
     expression = p.parse()
-    print('AST:\n')
-    for expr in expression:
-        print(expr)
-    print('\n')
-    if HAD_ERROR: return
-    print('Pretty Printer Output:\n')
-    for expr in expression:
-        print(AstPrinter().print(expr))
 
+    if HAD_ERROR: return
+    for expr in expression:
+        interpreter.interpret(expression=expr)
 
 if __name__ == '__main__':
-    main(['source.txt'])
+    main(['/Users/brian/projects/Redstone_HLS/interpreter/test/source.txt'])
