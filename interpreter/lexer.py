@@ -28,7 +28,8 @@ KEYWORDS = MappingProxyType({
     'endfunction': Tok.ENDFUNCTION,
     'always': Tok.ALWAYS,
     'true': Tok.TRUE,
-    'false': Tok.FALSE
+    'false': Tok.FALSE,
+    'print': Tok.PRINT
 })
 
 class LexerError(Exception):
@@ -107,8 +108,7 @@ class Lexer:
             case '{':
                 self._add_token(Tok.LBRACE)
             case ';':
-                pass
-                #self._add_token(Tok.SEMICOLON)
+                self._add_token(Tok.SEMICOLON)
             case ',':
                 self._add_token(Tok.COMMA)
             case '.':

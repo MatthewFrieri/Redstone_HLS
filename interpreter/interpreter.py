@@ -1,16 +1,17 @@
 from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping
+from .Stmt import Stmt, StmtVisitor, Expression, Print
 from .token import Token, Tok
 import numbers #number type checking
 from .runtime_errors import RuntimeError_
 from .errors import _RuntimeError
-from typing import Optional
 
-class Interpreter(ExprVisitor[object]):
 
-    def interpret(self, expression: Expr) -> None:
+class Interpreter(ExprVisitor[object], StmtVisitor[None]):
+
+    def interpret(self, statements: list[Stmt]) -> None:
         try:
-            value = self._evaluate(expression)
-            print(self._stringify(value))
+            for statement in statements:
+                self._execute(statement)
         
         except RuntimeError_ as err:
             _RuntimeError(err) 
@@ -18,6 +19,11 @@ class Interpreter(ExprVisitor[object]):
 
 
     #helpers
+    def _execute(self, stmt: Stmt) -> None:
+        stmt.accept(self)
+        return
+
+
     def _evaluate(self, expr: Expr) -> object:
         return expr.accept(self)
 
@@ -52,7 +58,7 @@ class Interpreter(ExprVisitor[object]):
 
 
 #------------------------------------------------------------#
-
+    #Expr
     def visit_literal_expr(self, expr: Literal) -> object:
         return expr.value
     
@@ -124,3 +130,13 @@ class Interpreter(ExprVisitor[object]):
                 return self._isEqual(left, right)
             
         return None
+    
+    #Stmt
+    def visit_expression_stmt(self, stmt: Expression) -> None:
+        self._evaluate(stmt.expression)
+        return
+    
+    def visit_print_stmt(self, stmt: Print) -> None:
+        value = self._evaluate(stmt.expression)
+        print(self._stringify(value))
+        return

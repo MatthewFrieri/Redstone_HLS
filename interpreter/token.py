@@ -91,7 +91,7 @@ class Tok(Enum):
     DOT = auto()
     HASH = auto()
 
-
+    PRINT = auto()
     COMMENT = auto()
     EOF = auto()
 

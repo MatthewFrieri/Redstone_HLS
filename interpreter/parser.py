@@ -1,7 +1,7 @@
 from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary
 from .token import Token, Tok
 from .errors import error
-
+from .Stmt import Stmt, StmtVisitor, Print, Expression
 
 class ParseError(Exception):
     pass
@@ -14,20 +14,36 @@ class Parser:
 
     
     def parse(self) -> list[Expr]:
-        expressions = []
-        while not self.is_at_end():
-            try:
-                expressions.append(self.expression())
-            except ParseError:
-                return None
-        return expressions
+        statements: list[Stmt] = []
 
+        while not self.is_at_end():
+            statements.append(self.statement())
+
+        return statements
+    
 
     def error(self, token: Token, message: str) -> ParseError:
         error(token=token, message=message)
         return ParseError
 
 #Helper functions
+    def statement(self) -> Stmt:
+        if self.match(Tok.PRINT):
+            return self.printStatement()
+        return self.expressionStatement()
+    
+    def printStatement(self) -> Stmt:
+        value = self.expression()
+        self.consume(Tok.SEMICOLON, "Expected ';' after value.")
+        return Print(value)
+    
+
+    def expressionStatement(self) -> Stmt:
+        expr = self.expression()
+        self.consume(Tok.SEMICOLON, "Expceted ';' after expression.")
+        return Expression(expr)
+
+
     def match(self, *types: Tok) -> bool:
         for t in types:
             if self.check(t):

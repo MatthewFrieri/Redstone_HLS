@@ -12,6 +12,7 @@ from .lexer import Lexer
 from .AstPPrinter import AstPrinter
 from .interpreter import Interpreter
 
+
 interpreter = Interpreter()
 
 
@@ -52,12 +53,11 @@ def run(source: str) -> None:
 
     lex=Lexer(source, is_file=False)
     tokens = lex.scan_tokens()
-    p = Parser(tokens=tokens)
-    expression = p.parse()
-
+    parser = Parser(tokens=tokens)
+    statements = parser.parse()
+    
     if HAD_ERROR: return
-    for expr in expression:
-        interpreter.interpret(expression=expr)
+    interpreter.interpret(statements)
 
 if __name__ == '__main__':
     main(['/Users/brian/projects/Redstone_HLS/interpreter/test/source.txt'])
