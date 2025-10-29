@@ -8,6 +8,57 @@ class ParseError(Exception):
 
 
 class Parser:
+    '''
+    This Parser uses Recursive Descent, along with an LL(1) Context Free Grammar. The grammar is defined in the grammar.cfg file. 
+    Each expression is defined recursively, in order of lowest to highest "precedence". Higher precedence operations and expressions take priority
+    and are evaluated before lower precedence. Since the grammar rules are defined in terms of higher precedence, they are recursively called until
+    the given token suites the rule. Thus, the base case is Primary.
+    The LL(1) means that the parser must lookahead a minimum of one token in order to parse an expression fully with no backtracking. See the example below.
+    Example: 1 + 2 * -3;
+    Tokens: [1, +, 2, *, -, 3, ;]
+
+    Start:
+    Program
+        statement
+            exprStmt
+                expression
+                    equality
+                        comparison
+                            term
+                                factor
+                                    unary
+                                        primary: token[0] defined as Literal.
+                                    token[1] in ( ~ | - )? no -> move up
+                                token[1] in ( * | / )? no -> move up
+                            token[1] in ( + | - )? yes -> left factor = token[0], operation = token[1]. 
+                            Parse token[2].
+                                        primary: token[2] defined as Literal.
+                                    token[3] in ( ~ | - )? no -> move up
+                                token[3] in ( * | / )? yes -> left unary = token[2], operation = token[3].
+                                Parse token[4].
+                                    token[4] in ( ~ | - )? yes -> operation = token[4].
+                                    Parse token[5].
+                                        primary: token[5] defined as Literal.
+                                        Token[6] = ";", terminate.
+                                
+                                    
+    Thus, the final parsed expression is:
+    (+ 1 
+        ( * 2
+            ( - 3))
+    Or, in a tree:
+          +
+         / \
+        1   *
+           / \
+          2   3
+    
+    The precedence ordering allows for certain operations ( /, * ) to take place before others ( +, - ).
+    For further reading: 
+        https://en.wikipedia.org/wiki/Recursive_descent_parser - Recursive Descent
+        https://en.wikipedia.org/wiki/Context-free_grammar - CFG (Context Free Grammar)
+        https://en.wikipedia.org/wiki/LL_parser - LL parsers
+    '''
     def __init__(self, tokens: list[Token]) -> None:
         self.tokens = tokens
         self.current = 0
@@ -79,12 +130,15 @@ class Parser:
 
 
 
+
+
+
     def expression(self) -> Expr:
         return self.equality()
     
     def equality(self) -> Expr:
         expr = self.comparison()
-
+        
         while self.match(Tok.NEQ, Tok.EQ):
             operator = self.previous()
             right = self.comparison()
