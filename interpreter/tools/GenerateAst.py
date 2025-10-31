@@ -99,17 +99,24 @@ def define_ast(
 
 
 definitions = {
+    'Assign' : ['name Token', 'value Expr'],
     'Binary' : ['left Expr', 'operator Token', 'right Expr'],
     'Grouping' : ['expression Expr'],
     'Literal' : ['value object'],
-    'Unary' : ['operator Token', 'right Expr']
+    'Unary' : ['operator Token', 'right Expr'],
+    'Variable' : ['name Token']
 }
+
 
 statements = {
     "Expression" : ['expression Expr'],
-    "Print" : ["expression Expr"]
+    "Print" : ["expression Expr"],
+    'Var' : ['name Token', 'intializer Expr']
 }
 
+boolean = {
+
+}
 
 if __name__ == '__main__':
-    define_ast(base='Stmt', definitions=statements, dependant=True)
+    define_ast(base='Expr', definitions=definitions)

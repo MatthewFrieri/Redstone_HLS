@@ -1,7 +1,8 @@
-from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary
+from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary, Variable, Assign
 from .token import Token, Tok
 from .errors import error
-from .Stmt import Stmt, StmtVisitor, Print, Expression
+from .Stmt import Stmt, StmtVisitor, Print, Expression, Var
+from .environment import Environment
 
 class ParseError(Exception):
     pass
@@ -58,17 +59,19 @@ class Parser:
         https://en.wikipedia.org/wiki/Recursive_descent_parser - Recursive Descent
         https://en.wikipedia.org/wiki/Context-free_grammar - CFG (Context Free Grammar)
         https://en.wikipedia.org/wiki/LL_parser - LL parsers
+        https://www.youtube.com/watch?v=ENKT0Z3gldE - Grammars and Recursive Descent Parsing
     '''
     def __init__(self, tokens: list[Token]) -> None:
         self.tokens = tokens
         self.current = 0
 
-    
+
+
     def parse(self) -> list[Expr]:
         statements: list[Stmt] = []
 
         while not self.is_at_end():
-            statements.append(self.statement())
+            statements.append(self.declaration())
 
         return statements
     
@@ -77,16 +80,41 @@ class Parser:
         error(token=token, message=message)
         return ParseError
 
-#Helper functions
+
+    def synchronize(self) -> None:
+        self.advance()
+        while not self.is_at_end:
+            if self.previous().kind == Tok.SEMICOLON:
+                return
+            
+            match self.peek().kind:
+                case Tok.FUNCTION: ...
+                case Tok.VAR: ...
+                case Tok.FOR: ...
+                case Tok.IF: ...
+                case Tok.WHILE: ...
+                case Tok.PRINT: ...
+            
+            self.advance()
+
     def statement(self) -> Stmt:
         if self.match(Tok.PRINT):
             return self.printStatement()
         return self.expressionStatement()
     
-    def printStatement(self) -> Stmt:
+    def printStatement(self) -> Stmt:  
         value = self.expression()
         self.consume(Tok.SEMICOLON, "Expected ';' after value.")
         return Print(value)
+    
+
+    def varDeclaration(self) -> Stmt:
+        name = self.consume(Tok.IDENT, "Expected Variable name")
+        initializer: Expr = None
+        if self.match(Tok.EQUAL):
+            initializer=self.expression()
+        self.consume(Tok.SEMICOLON, "Expected ';' after variable declaration.")
+        return Var(name, initializer)
     
 
     def expressionStatement(self) -> Stmt:
@@ -94,7 +122,7 @@ class Parser:
         self.consume(Tok.SEMICOLON, "Expceted ';' after expression.")
         return Expression(expr)
 
-
+    #Helper functions
     def match(self, *types: Tok) -> bool:
         for t in types:
             if self.check(t):
@@ -103,11 +131,9 @@ class Parser:
              
         return False
 
-
     def check(self, type_: Tok) -> bool:
         if self.is_at_end():
             return False
-
         return self.peek().kind == type_
 
 
@@ -127,14 +153,36 @@ class Parser:
     def previous(self) -> Token:
         return self.tokens[self.current - 1]
 
-
-
-
-
-
+    def declaration(self) -> Stmt:
+        try:
+            if self.match(Tok.VAR):
+                return self.varDeclaration()
+            return self.statement()
+        except ParseError:
+            self.synchronize()
+            return None
+        
+#------------------------------------------------
 
     def expression(self) -> Expr:
-        return self.equality()
+        return self.assignment()
+    
+    def assignment(self) -> Expr:
+        expr = self.equality()
+        if self.match(Tok.EQUAL):
+            equals = self.previous()
+            value = self.assignment()
+
+            if isinstance(expr, Variable):
+                name = expr.name
+                return Assign(name, value)
+            
+            error(token=equals, message='Invalid assignment target.')
+
+        return expr
+
+
+
     
     def equality(self) -> Expr:
         expr = self.comparison()
@@ -191,13 +239,17 @@ class Parser:
 
         if self.match(Tok.NUMBER, Tok.STRING):
             return Literal(self.previous().literal)
-        
+
+        if self.match(Tok.IDENT):
+            return Variable(self.previous())
+
         if self.match(Tok.LPAREN):
             expr = self.expression()
             self.consume(Tok.RPAREN, 'Expected ")" after expression.')
             return Grouping(expr)
         
         raise self.error(token=self.peek(), message="Unexpected Expression")
+
 
 
 

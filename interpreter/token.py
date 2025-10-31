@@ -29,6 +29,7 @@ class Tok(Enum):
     TRUE = auto()
     FALSE = auto()
     NULL = auto()
+    EQUAL = auto()
 
     
 
@@ -94,6 +95,7 @@ class Tok(Enum):
     PRINT = auto()
     COMMENT = auto()
     EOF = auto()
+    VAR = auto()
 
 
 @dataclass(frozen=True, slots=True)

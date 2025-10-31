@@ -1,14 +1,19 @@
-from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping
-from .Stmt import Stmt, StmtVisitor, Expression, Print
+from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping, Variable, Assign
+from .Stmt import Stmt, StmtVisitor, Expression, Print, Var
 from .token import Token, Tok
 import numbers #number type checking
 from .runtime_errors import RuntimeError_
 from .errors import _RuntimeError
+from .environment import Environment
 
 
 class Interpreter(ExprVisitor[object], StmtVisitor[None]):
 
+    def __init__(self):
+        self.environment = Environment()
+
     def interpret(self, statements: list[Stmt]) -> None:
+
         try:
             for statement in statements:
                 self._execute(statement)
@@ -131,12 +136,29 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
             
         return None
     
+    def visit_variable_expr(self, expr: Variable) -> object:
+        return self.environment.get(expr.name)
+    
+    def visit_assign_expr(self, expr: Assign) -> object:
+        value = self._evaluate(expr.value)
+        self.environment.assign(expr.name, value)
+        return value
+
     #Stmt
     def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)
         return
-    
+
     def visit_print_stmt(self, stmt: Print) -> None:
         value = self._evaluate(stmt.expression)
         print(self._stringify(value))
         return
+    
+    def visit_var_stmt(self, stmt: Var) -> None:
+        value = None
+        if stmt.intializer != None:
+            value = self._evaluate(stmt.intializer)
+        
+        self.environment.define(stmt.name.lexeme, value)
+        return 
+    

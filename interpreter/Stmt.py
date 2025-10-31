@@ -29,6 +29,9 @@ class StmtVisitor(ABC, Generic[T_co]):
     @abstractmethod
     def visit_print_stmt(self, node: "Print") -> T_co: ...
 
+    @abstractmethod
+    def visit_var_stmt(self, node: "Var") -> T_co: ...
+
     
 
  
@@ -48,3 +51,12 @@ class Print(Stmt):
     
     def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
         return visitor.visit_print_stmt(self)
+
+ 
+@dataclass(frozen=True, slots=True)
+class Var(Stmt):
+    name: Token
+    intializer: Expr
+    
+    def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
+        return visitor.visit_var_stmt(self)

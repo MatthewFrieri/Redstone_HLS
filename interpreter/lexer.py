@@ -29,7 +29,8 @@ KEYWORDS = MappingProxyType({
     'always': Tok.ALWAYS,
     'true': Tok.TRUE,
     'false': Tok.FALSE,
-    'print': Tok.PRINT
+    'print': Tok.PRINT,
+    'var': Tok.VAR
 })
 
 class LexerError(Exception):
@@ -172,7 +173,7 @@ class Lexer:
                     else:
                         self._add_token(Tok.EQ)
                 else:
-                    self._add_token(Tok.ASSIGN)
+                    self._add_token(Tok.EQUAL)
             case '<':
                 if self._match('='):
                     self._add_token(Tok.LTE)
@@ -267,7 +268,6 @@ class Lexer:
             size = self.source[self.start:self.current]
             #self.advance()
             if self._peek().lower() in {'b', 'o', 'd', 'h'}:
-                print(base)
                 base = self._peek()
                 self._advance()
             
