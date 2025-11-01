@@ -33,6 +33,9 @@ class ExprVisitor(ABC, Generic[T_co]):
     def visit_unary_expr(self, node: "Unary") -> T_co: ...
 
     @abstractmethod
+    def visit_logical_expr(self, node: "Logical") -> T_co: ...
+
+    @abstractmethod
     def visit_variable_expr(self, node: "Variable") -> T_co: ...
 
     
@@ -82,6 +85,16 @@ class Unary(Expr):
     
     def accept(self, visitor: 'ExprVisitor[T_co]') -> T_co:
         return visitor.visit_unary_expr(self)
+
+ 
+@dataclass(frozen=True, slots=True)
+class Logical(Expr):
+    left: Expr
+    operator: Token
+    right: Expr
+    
+    def accept(self, visitor: 'ExprVisitor[T_co]') -> T_co:
+        return visitor.visit_logical_expr(self)
 
  
 @dataclass(frozen=True, slots=True)

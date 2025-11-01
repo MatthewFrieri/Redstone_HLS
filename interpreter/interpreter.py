@@ -1,5 +1,5 @@
-from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping, Variable, Assign
-from .Stmt import Stmt, StmtVisitor, Expression, Print, Var
+from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping, Variable, Assign, Logical
+from .Stmt import Stmt, StmtVisitor, Expression, Print, Var, Block, If, While
 from .token import Token, Tok
 import numbers #number type checking
 from .runtime_errors import RuntimeError_
@@ -60,6 +60,18 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
                 raise RuntimeError_(operator, "Operand(s) must be number(s).")
 
         return
+    
+
+    def _executeBlock(self, statements: list[Stmt], environment: Environment) -> None:
+        previous = self.environment
+        try:
+            self.environment = environment
+            for statement in statements:
+                self._execute(statement)
+
+        finally:
+            self.environment = previous
+        
 
 
 #------------------------------------------------------------#
@@ -134,6 +146,18 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
                 self._checkNumberOperands(expr.operator, left, right)
                 return self._isEqual(left, right)
             
+            case Tok.AND:
+                self._checkNumberOperands(expr.operator, left, right)
+                return int(left) & int(right)
+            
+            case Tok.OR:
+                self._checkNumberOperands(expr.operator, left, right)
+                return int(left) | int(right)
+            
+            case Tok.XOR:
+                self._checkNumberOperands(expr.operator, left, right)
+                return int(left) ^ int(right)
+            
         return None
     
     def visit_variable_expr(self, expr: Variable) -> object:
@@ -143,11 +167,50 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
         value = self._evaluate(expr.value)
         self.environment.assign(expr.name, value)
         return value
+    
+    def visit_logical_expr(self, expr: Logical) -> int:
+        left = self._evaluate(expr.left)
+
+        if expr.operator.kind == Tok.LOR:
+            #short circuit: only have to check LHS
+            if self._isTruthy(left):
+                return 1
+
+        elif expr.operator.kind == Tok.LAND:
+            if not self._isTruthy(left):
+                return 0
+            
+        right = self._evaluate(expr.right)
+
+        if expr.operator.kind == Tok.LXOR:
+            return int(self._isTruthy(left) != self._isTruthy(right))
+
+        if self._isTruthy(right):
+            return 1
+        
+        return 0
 
     #Stmt
+    def visit_block_stmt(self, stmt: Block) -> None:
+        new_env = Environment(self.environment)
+        self._executeBlock(stmt.statements, new_env)
+        return
+
+
     def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)
         return
+    
+    def visit_if_stmt(self, stmt: If) -> None:
+        #Evaluate truthy on conditional
+        if self._isTruthy(self._evaluate(stmt.condition)):
+            self._execute(stmt.thenBranch)
+
+        #No else Branch -> None
+        elif stmt.elseBranch is not None:
+            self._execute(stmt.elseBranch)
+        else:
+            return
 
     def visit_print_stmt(self, stmt: Print) -> None:
         value = self._evaluate(stmt.expression)
@@ -162,3 +225,9 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
         self.environment.define(stmt.name.lexeme, value)
         return 
     
+    def visit_while_stmt(self, stmt: While) -> None:
+        condition = stmt.condition
+        while self._isTruthy(self._evaluate(condition)):
+            self._execute(stmt.body)
+        
+        return

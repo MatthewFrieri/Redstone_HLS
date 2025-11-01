@@ -24,7 +24,13 @@ class Stmt(ABC):
 #Abstract Visitor Interface - Not to be instantiated directly
 class StmtVisitor(ABC, Generic[T_co]):
     @abstractmethod
+    def visit_block_stmt(self, node: "Block") -> T_co: ...
+
+    @abstractmethod
     def visit_expression_stmt(self, node: "Expression") -> T_co: ...
+
+    @abstractmethod
+    def visit_if_stmt(self, node: "If") -> T_co: ...
 
     @abstractmethod
     def visit_print_stmt(self, node: "Print") -> T_co: ...
@@ -32,9 +38,20 @@ class StmtVisitor(ABC, Generic[T_co]):
     @abstractmethod
     def visit_var_stmt(self, node: "Var") -> T_co: ...
 
+    @abstractmethod
+    def visit_while_stmt(self, node: "While") -> T_co: ...
+
     
 
  
+
+ 
+@dataclass(frozen=True, slots=True)
+class Block(Stmt):
+    statements: list[Stmt]
+    
+    def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
+        return visitor.visit_block_stmt(self)
 
  
 @dataclass(frozen=True, slots=True)
@@ -43,6 +60,16 @@ class Expression(Stmt):
     
     def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
         return visitor.visit_expression_stmt(self)
+
+ 
+@dataclass(frozen=True, slots=True)
+class If(Stmt):
+    condition: Expr
+    thenBranch: Expr
+    elseBranch: Expr
+    
+    def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
+        return visitor.visit_if_stmt(self)
 
  
 @dataclass(frozen=True, slots=True)
@@ -60,3 +87,12 @@ class Var(Stmt):
     
     def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
         return visitor.visit_var_stmt(self)
+
+ 
+@dataclass(frozen=True, slots=True)
+class While(Stmt):
+    condition: Expr
+    body: Stmt
+    
+    def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
+        return visitor.visit_while_stmt(self)

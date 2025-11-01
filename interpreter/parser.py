@@ -1,7 +1,7 @@
-from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary, Variable, Assign
+from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary, Variable, Assign, Logical
 from .token import Token, Tok
 from .errors import error
-from .Stmt import Stmt, StmtVisitor, Print, Expression, Var
+from .Stmt import Stmt, StmtVisitor, Print, Expression, Var, Block, If, While
 from .environment import Environment
 
 class ParseError(Exception):
@@ -83,7 +83,7 @@ class Parser:
 
     def synchronize(self) -> None:
         self.advance()
-        while not self.is_at_end:
+        while not self.is_at_end():
             if self.previous().kind == Tok.SEMICOLON:
                 return
             
@@ -98,8 +98,17 @@ class Parser:
             self.advance()
 
     def statement(self) -> Stmt:
+        if self.match(Tok.IF):
+            return self.ifStatement()
         if self.match(Tok.PRINT):
             return self.printStatement()
+        if self.match(Tok.BEGIN):
+            return Block(self.block())
+        if self.match(Tok.WHILE):
+            return self.whileStatement()
+        if self.match(Tok.FOR):
+            return self.forStatement()
+
         return self.expressionStatement()
     
     def printStatement(self) -> Stmt:  
@@ -162,13 +171,77 @@ class Parser:
             self.synchronize()
             return None
         
+    def block(self) -> list[Stmt]:
+        statements: list[Stmt] = []
+        while (not self.check(Tok.END)) and (not self.is_at_end()):
+            statements.append(self.declaration())
+        
+        self.consume(Tok.END, 'Expected END keyword after block.')
+        return statements
+    
+
+    def ifStatement(self) -> Stmt:
+        self.consume(Tok.LPAREN, "Expected '(' after if condition.")
+        condition = self.expression()
+        self.consume(Tok.RPAREN, "Expected ')' after if condition.")
+
+        thenBranch = self.statement()
+        elseBranch = None
+        if self.match(Tok.ELSE):
+            elseBranch = self.statement()
+
+        return If(condition, thenBranch, elseBranch)
+
+    def whileStatement(self) -> Stmt:
+        self.consume(Tok.LPAREN, "Expected '(' after While.)")
+        condition = self.expression()
+        self.consume(Tok.RPAREN, "Expected ')' after While.")
+        body = self.statement()
+        return While(condition, body)
+    
+    def forStatement(self) -> Stmt:
+        self.consume(Tok.LPAREN, "Expected '(' after For.")
+        if self.match(Tok.SEMICOLON):
+            initializer = None
+        elif self.match(Tok.VAR):
+            initializer = self.varDeclaration()
+        else:
+            initializer = self.expressionStatement()
+
+        condition = None
+        if not self.check(Tok.SEMICOLON):
+            condition = self.expression()
+        self.consume(Tok.SEMICOLON, "Expected ';' after loop conditional")
+
+        increment = None
+        if not self.check(Tok.RPAREN):
+            increment = self.expression()
+        self.consume(Tok.RPAREN, "Expected ')' after For.")
+
+        body = self.statement()
+
+        #Syntactic Sugar: for loop is While w/ increment
+        if increment is not None:
+            body = Block([body, Expression(increment)])
+        
+        #No condition -> infinite loop
+        if condition is None: condition = Literal(True)
+        body = While(condition, body)
+
+        if initializer is not None:
+                body = Block([initializer, body]) 
+
+
+        return body
+
+    
 #------------------------------------------------
 
     def expression(self) -> Expr:
         return self.assignment()
     
     def assignment(self) -> Expr:
-        expr = self.equality()
+        expr = self.logical_or()
         if self.match(Tok.EQUAL):
             equals = self.previous()
             value = self.assignment()
@@ -180,9 +253,60 @@ class Parser:
             error(token=equals, message='Invalid assignment target.')
 
         return expr
+    
+    def logical_or(self) -> Expr:
+        expr = self.logical_xor()
+        while self.match(Tok.LOR):
+            operator = self.previous()
+            right = self.logical_xor()
+            expr = Logical(expr, operator, right)
 
+        return expr
+    
+    def logical_xor(self) -> Expr:
+        expr = self.logical_and()
+        while self.match(Tok.LXOR):
+            operator = self.previous()
+            right = self.logical_and()
+            expr = Logical(expr, operator, right)
 
+        return expr
 
+    def logical_and(self) -> Expr:
+        expr = self.bit_or()
+        while self.match(Tok.LAND):
+            operator = self.previous()
+            right = self.bit_or()
+            expr = Logical(expr, operator, right)
+        
+        return expr
+
+    def bit_or(self) -> Expr:
+        expr = self.bit_xor()
+        while self.match(Tok.OR):
+            operator = self.previous()
+            right = self.bit_xor()
+            expr = Binary(expr, operator, right)
+        
+        return expr
+    
+    def bit_xor(self) -> Expr:
+        expr = self.bit_and()
+        while self.match(Tok.XOR):
+            operator = self.previous()
+            right = self.bit_and()
+            expr = Binary(expr, operator, right)
+
+        return expr
+    
+    def bit_and(self) -> Expr:
+        expr = self.equality()
+        while self.match(Tok.AND):
+            operator = self.previous()
+            right = self.equality()
+            expr = Binary(expr, operator, right)
+
+        return expr
     
     def equality(self) -> Expr:
         expr = self.comparison()

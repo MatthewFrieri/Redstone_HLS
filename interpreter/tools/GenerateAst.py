@@ -104,14 +104,18 @@ definitions = {
     'Grouping' : ['expression Expr'],
     'Literal' : ['value object'],
     'Unary' : ['operator Token', 'right Expr'],
+    'Logical' : ['left Expr', 'operator Token', 'right Expr'],
     'Variable' : ['name Token']
 }
 
 
 statements = {
+    "Block" : ['statements list[Stmt]'],
     "Expression" : ['expression Expr'],
+    "If" : ['condition Expr', 'thenBranch Expr', 'elseBranch Expr'],
     "Print" : ["expression Expr"],
-    'Var' : ['name Token', 'intializer Expr']
+    'Var' : ['name Token', 'intializer Expr'],
+    'While' : ['condition Expr', 'body Stmt']
 }
 
 boolean = {
@@ -119,4 +123,5 @@ boolean = {
 }
 
 if __name__ == '__main__':
-    define_ast(base='Expr', definitions=definitions)
+    define_ast(base='Stmt', definitions=statements, dependant=True)
+    #define_ast(base='Expr', definitions=definitions)
