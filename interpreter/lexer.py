@@ -139,18 +139,15 @@ class Lexer:
         
             #Boolean
             case '~':
-                if self._match('^'):
-                    self._add_token(Tok.XNOR)
-                else:
-                    self._add_token(Tok.NOT)
+                self._add_token(Tok.NOT)
             case '&':
                 if self._match('&'):
                     self._add_token(Tok.LAND)
                 else:
                     self._add_token(Tok.AND)
             case '^':
-                if self._match('~'):
-                    self._add_token(Tok.XNOR)
+                if self._match('^'):
+                    self._add_token(Tok.LXOR)
                 else:
                     self._add_token(Tok.XOR)
             case '|':

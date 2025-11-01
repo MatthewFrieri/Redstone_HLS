@@ -56,13 +56,13 @@ class Tok(Enum):
     OR = auto() #Bitwise/Reduction OR: |
     XOR = auto() #Bitwise/Reduction XOR: ^
     NOT = auto() #Bitwise NOT: ~
-    XNOR = auto() #Bitwise/Reduction XNOR: ~^ or ^~
     #Bitwse NAND and Bitwise NOR are derived: ~(a & b), ~(a | b)
 
 
     #Logical
     LNOT = auto() #Logical NOT: !
     LAND = auto() #Logical AND: &&
+    LXOR = auto() #Logical XOR: ^^
     LOR = auto() #Logical OR: ||
     EQ = auto() #Equality: == (ex. 10x==10z yields True)
     NEQ = auto() #Inequality: !=
@@ -75,7 +75,7 @@ class Tok(Enum):
 
     #TODO: how to parse??
     AT = auto()
-    QMARK = auto() #Used in ternary conditional: cond ? a : b
+    QMARK = auto() #Used in ternary conditional: cond ? a : b -> kind of annoying to parse - should just drop
     COLON = auto() #Used in ternary conditional
     #Logical NAND and Logical NOR are derived: ~(a && b), ~(a || b)
 
