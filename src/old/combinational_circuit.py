@@ -1,5 +1,5 @@
 from const import Block
-from gates import Gate
+from old.gates import Gate
 from wires import Wire
 from region_wrappper import RegionWrapper
 

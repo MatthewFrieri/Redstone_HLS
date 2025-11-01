@@ -1,10 +1,15 @@
 from litemapy import BlockState
 
 
-Coord = tuple[int, int, int]
+Coord2 = tuple[int, int]
+Coord3 = tuple[int, int, int]
 
 
 class RegionNestingError(Exception):
+    pass
+
+
+class CanvasPlacingError(Exception):
     pass
 
 

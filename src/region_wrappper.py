@@ -2,7 +2,7 @@ from __future__ import annotations
 from copy import deepcopy
 from litemapy import Region, Schematic
 
-from const import Block, Coord, RegionNestingError
+from const import Block, Coord3, RegionNestingError
 
 
 class RegionWrapper(Region):
@@ -18,7 +18,7 @@ class RegionWrapper(Region):
     def __str__(self) -> str:
         return f"RegionWrapper with dimmensions ({self.width}, {self.height}, {self.length})."
 
-    def nest_region(self, sub_region: RegionWrapper, pos: Coord) -> None:
+    def nest_region(self, sub_region: RegionWrapper, pos: Coord3) -> None:
         x, y, z = pos
         if (
             x + sub_region.width > self.width
@@ -49,22 +49,22 @@ class RegionWrapper(Region):
         for sub_region in self.__sub_regions:
             sub_region._flatten()
 
-            for coord in sub_region.block_positions():
-                block = sub_region[coord]
+            for Coord3 in sub_region.block_positions():
+                block = sub_region[Coord3]
                 if block == Block.AIR:
                     continue
 
-                parent_coord = self._sub_to_parent_coord(sub_region, coord)
+                parent_Coord3 = self._sub_to_parent_Coord3(sub_region, Coord3)
 
-                if self[parent_coord] != Block.AIR:
+                if self[parent_Coord3] != Block.AIR:
                     raise RegionNestingError("Sub region blocks overlap with parent region blocks.")
-                self[parent_coord] = block
+                self[parent_Coord3] = block
 
         self.__sub_regions = []
 
     @staticmethod
-    def _sub_to_parent_coord(sub_region: RegionWrapper, coord: Coord):
-        local_x, local_y, local_z = coord
+    def _sub_to_parent_Coord3(sub_region: RegionWrapper, Coord3: Coord3):
+        local_x, local_y, local_z = Coord3
         return (
             local_x + sub_region.x,
             local_y + sub_region.y,

@@ -1,23 +1,44 @@
-from const import Block
+from const import Coord2
 from region_wrappper import RegionWrapper
 
 
 class Gate:
+    def __init__(self, width: int, length: int, inputs: list[Coord2], output: Coord2) -> None:
+        self._width = width
+        self._length = length
+        self._inputs = inputs
+        self._output = output
 
-    @staticmethod
-    def south_and(n: int) -> RegionWrapper:
-        size = 2 * n - 1
-        reg = RegionWrapper(size, 2, 3)
+    def get_width(self) -> int:
+        return self._width
 
-        for i in range(size):
-            reg[i, 0, 1] = Block.BLACK_WOOL
-            reg[i, 1, 1] = Block.REDSTONE
+    def get_length(self) -> int:
+        return self._length
 
-            if i % 2 == 0:
-                reg[i, 0, 0] = Block.TARGET
-                reg[i, 1, 0] = Block.TORCH
+    def get_size(self) -> tuple[int, int]:
+        return self._width, self._length
 
-            if i == n - 1:
-                reg[i, 0, 2] = Block.S_TORCH
+    def get_inputs(self) -> list[Coord2]:
+        return self._inputs
 
-        return reg
+    def get_output(self) -> Coord2:
+        return self._output
+
+    def build(self) -> RegionWrapper:
+        raise NotImplementedError
+
+
+class OR(Gate):
+    def __init__(self) -> None:
+        super().__init__(3, 3, [(0, 0), (2, 0)], (1, 2))
+
+    def build(self):
+        pass
+
+
+class AND(Gate):
+    def __init__(self) -> None:
+        super().__init__(3, 4, [(0, 0), (2, 0)], (1, 3))
+
+    def build(self):
+        pass

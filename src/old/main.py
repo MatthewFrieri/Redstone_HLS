@@ -1,4 +1,4 @@
-from combinational_circuit import CombinationalCircuit
+from old.combinational_circuit import CombinationalCircuit
 from const import Block
 from region_wrappper import RegionWrapper
 
