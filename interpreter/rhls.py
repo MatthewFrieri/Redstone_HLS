@@ -3,6 +3,7 @@
 #L evel
 #S ynthesis
 
+
 import sys
 from pathlib import Path
 from .errors import HAD_ERROR, HAD_RUNTIME_ERROR
@@ -11,9 +12,11 @@ from .parser import Parser
 from .lexer import Lexer
 from .AstPPrinter import AstPrinter
 from .interpreter import Interpreter
+from .netlistPrinter import NetlistGenerator
 
 
 interpreter = Interpreter()
+net = NetlistGenerator()
 
 
 def main(argv: list[str]) -> None:
@@ -57,7 +60,7 @@ def run(source: str) -> None:
     statements = parser.parse()
     
     if HAD_ERROR: return
-    interpreter.interpret(statements)
-
+    #interpreter.interpret(statements)
+    net.create_netlist(statements)
 if __name__ == '__main__':
-    main(['/Users/brian/projects/Redstone_HLS/interpreter/test/source.txt'])
+    main(sys.argv[1:])
