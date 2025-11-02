@@ -37,7 +37,7 @@ class NetlistGenerator(ExprVisitor[object], StmtVisitor[None]):
             for statement in statements:
                 self._execute(statement)
             self.inputs = {x for x in self.seen if x not in self.driven}
-            self.outputs = self.driven
+            self.outputs = {x for x in self.driven if x not in self.seen}
             self.nets = {f't{x}' for x in range(1, self.temp_id + 1)}
             self.nets = self.nets | self.outputs | self.inputs
             print(f'In: {self.inputs}\nOut: {self.outputs}\n\nOperations:')
