@@ -1,0 +1,5 @@
+var a;
+var b;
+var c = (a^b);
+var d = (a&c) ^ (b | c);
+var e = (~d) ^ c & (a | b);

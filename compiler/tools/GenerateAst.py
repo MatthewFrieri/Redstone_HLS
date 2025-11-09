@@ -11,9 +11,11 @@ This would require a series of if statements, however this would be very slow an
 
 Alternatively, Implementing each action within a single Expr class could work, however this violates the open/close principle, as implementation of 
 new functions requires changes to multiple nodes.
-The visitor pattern defines abstract visitor objects to be performed on by specific subclasses. When an operation is called,
-the visitor will accept the operation and dispatch it to a parent ExprVisitor abstract class, to perform the operation. This ensures scalability
-and readability.
+The visitor pattern circumvents this problem by adding an interface layer rbetween the construct and operations. We first define
+an abstract visitor interface and element interface. We can define nodes that are subclasses of the element interface,
+known as concrete elements, each inheriting a unique accept method. This method dispatches to the abstract visitor interface,
+which defines a visit_element method. WHen you implement a concrete visitor, you can implement unique behaviour that each node
+should have.
 
 This tool is used to generate the nodes and base interfaces needed for the visitor pattern. Each node is implemented as a dataclass
 that is frozen and slots=True, to enforce read-only behaviour and improve memory performance. For additional readability, a covariant type variable 
@@ -101,6 +103,7 @@ def define_ast(
 definitions = {
     'Assign' : ['name Token', 'value Expr'],
     'Binary' : ['left Expr', 'operator Token', 'right Expr'],
+    'Call' : ['calle Expr', 'paren Token', 'arguments list[Expr]'],
     'Grouping' : ['expression Expr'],
     'Literal' : ['value object'],
     'Unary' : ['operator Token', 'right Expr'],
@@ -123,5 +126,5 @@ boolean = {
 }
 
 if __name__ == '__main__':
-    define_ast(base='Stmt', definitions=statements, dependant=True)
-    #define_ast(base='Expr', definitions=definitions)
+    #define_ast(base='Stmt', definitions=statements, dependant=True)
+    define_ast(base='Expr', definitions=definitions)

@@ -1,0 +1,16 @@
+// Boolean expressions for netlist generation (only booleans over predeclared variables).
+// Operators: ~ (NOT), & (AND), | (OR), ^ (XOR)
+// Notes: No numeric literals; all assignments use previously declared variables.
+
+var a;
+var b;
+var c = (a ^ b) & (~a);
+var d = (a & c) ^ (b | c);
+var e = ~(a | b) & (c ^ d);
+var f = (a & b) | (~c & d);
+var g = (a ^ c) | (b & d);
+var h = (~(a & b)) & (c | d);
+var i = (h & (e | f)) ^ g;
+var j = (~e) ^ (f & h);
+var k = (i | j) & (~g);
+var m = (k ^ d) & ((~i) | a);

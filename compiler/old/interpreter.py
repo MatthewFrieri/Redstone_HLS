@@ -1,16 +1,17 @@
-from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping, Variable, Assign, Logical
+from .Expr import Expr, ExprVisitor, Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call
 from .Stmt import Stmt, StmtVisitor, Expression, Print, Var, Block, If, While
 from .token import Token, Tok
 import numbers #number type checking
 from .runtime_errors import RuntimeError_
 from .errors import _RuntimeError
 from .environment import Environment
-
+from .callable import Callable
 
 class Interpreter(ExprVisitor[object], StmtVisitor[None]):
 
     def __init__(self):
-        self.environment = Environment()
+        self.globals = Environment()
+        self.environment = self.globals
 
     def interpret(self, statements: list[Stmt]) -> None:
 
@@ -189,6 +190,23 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
             return 1
         
         return 0
+    
+    def visit_call_expr(self, expr: Call) -> object:
+        callee = self._evaluate(expr.calle)
+        arguments: list[Expr] = []
+        for argument in expr.arguments:
+            arguments.append(self._evaluate(argument))
+
+        if not isinstance(callee, Callable):
+            raise RuntimeError(expr.paren, "Can only call functions and classes.")
+
+        function: Callable = callee
+
+        if len(arguments) != function.arity():
+            raise RuntimeError(expr.paren, f"Expected {function.arity} arguments, got {len(arguments)}.")
+        
+        return function.call(self, arguments)
+
 
     #Stmt
     def visit_block_stmt(self, stmt: Block) -> None:

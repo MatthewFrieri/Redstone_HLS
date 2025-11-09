@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -101,7 +102,7 @@ class Tok(Enum):
 @dataclass(frozen=True, slots=True)
 class Token:
     #Abstract immutable Token class: Accepts token kind, lexeme, line number, and col number.
-    kind: Tok
+    kind: Tok | Number
     lexeme: str
     line: int
     col: int
@@ -110,3 +111,15 @@ class Token:
     size: int | None = None
     signed: bool | None = None
     base: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Number:
+    '''Number Token type
+    Syntax: (bits)(b/d)(signed?)(literal)
+    Signed numbers use two's compliment. I.e., a signed 8 bit number will have 7 numerical bits and 1 sign bit.
+    example: 
+    '''
+    bits: int
+    base: str
+    signed: bool | None = False

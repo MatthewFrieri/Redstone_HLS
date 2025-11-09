@@ -1,4 +1,4 @@
-from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary, Variable, Assign, Logical
+from .Expr import Expr, ExprVisitor, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
 from .token import Token, Tok
 from .errors import error
 from .Stmt import Stmt, StmtVisitor, Print, Expression, Var, Block, If, While
@@ -61,6 +61,8 @@ class Parser:
         https://en.wikipedia.org/wiki/LL_parser - LL parsers
         https://www.youtube.com/watch?v=ENKT0Z3gldE - Grammars and Recursive Descent Parsing
     '''
+
+    #TODO: Refactor bruh this is so unreadable
     def __init__(self, tokens: list[Token]) -> None:
         self.tokens = tokens
         self.current = 0
@@ -193,6 +195,7 @@ class Parser:
         return If(condition, thenBranch, elseBranch)
 
     def whileStatement(self) -> Stmt:
+        #Not expression?
         self.consume(Tok.LPAREN, "Expected '(' after While.)")
         condition = self.expression()
         self.consume(Tok.RPAREN, "Expected ')' after While.")
@@ -354,7 +357,31 @@ class Parser:
             right = self.unary()
             return Unary(operator, right)
         
-        return self.primary()
+        return self.call()
+    
+    def call(self) -> Expr:
+        expr = self.primary()
+        while True:
+            if self.match(Tok.LPAREN):
+                expr = self.finishCall(expr)
+            else:
+                break
+        
+        return expr
+
+    def finishCall(self, callee: Expr) -> Expr:
+        arguments: list[Expr] = []
+
+        if not self.check(Tok.RPAREN):
+            arguments.append(self.expression())
+            while self.match(Tok.COMMA):
+                arguments.append(self.expression())
+                if len(arguments) >= 255:
+                    error(token=self.peek(), message="Cannot have more than 255 arguments.")
+
+        paren = self.consume(Tok.RPAREN, "Expected ')' after function call")
+
+        return Call(callee, paren, arguments)
     
     def primary(self) -> Expr:
         if self.match(Tok.FALSE): return Literal(False)

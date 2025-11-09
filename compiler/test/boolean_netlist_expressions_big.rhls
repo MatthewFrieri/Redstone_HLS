@@ -1,0 +1,58 @@
+// Larger boolean expressions set for netlist generation.
+// Constraints:
+// - Only boolean ops over predeclared variables: ~ (NOT), & (AND), | (OR), ^ (XOR)
+// - No True/False or numeric literals.
+// - Inputs remain ambiguous (declared, not assigned).
+// - Multiple real outputs at the end which are not used by later assignments.
+
+// Primary inputs
+var a;
+var b;
+var c;
+var d;
+var e;
+var f;
+var g;
+var h;
+var i;
+var j;
+
+// Internal net
+var p1  = (a ^ b) & (~c);
+var p2  = (d | e) ^ (a & (~b));
+var p3  = (f & g) | (h ^ a);
+var p4  = (~(d & e)) & (b | c);
+var p5  = (p1 ^ p2) & (~p3);
+var p6  = (p3 | p4) ^ (g & h);
+var p7  = (p5 & p6) | (~p4);
+var p8  = (p2 ^ p6) & (p1 | p3);
+var p9  = (~p7) ^ (p8 & a);
+var p10 = (p9 & (p1 ^ p4)) | (p5 & (~p2));
+var p11 = (p10 ^ (p6 | p7)) & (~p3);
+var p12 = (p11 | (p8 ^ p9)) & (d ^ h);
+var p13 = (p12 & (p10 | p5)) ^ (~p6);
+var p14 = (p13 | (p7 & p8)) ^ (p9 & (~p1));
+var p15 = (~(p11 & p14)) & (p10 | p12);
+var p16 = (p15 ^ (p13 & p4)) | (p2 & (~p9));
+var p17 = (p16 & (p14 | p5)) ^ (p12 & p3);
+var p18 = (~p16) & (p17 ^ (p10 | p11));
+var p19 = (p18 | (p7 ^ p13)) & (~p15);
+var p20 = (p19 ^ (p6 & p17)) | (p14 & (~p18));
+
+// Real outputs (not used later)
+var y1 = (p20 & (a | b)) ^ (p15 & (~c));
+var y2 = (p18 ^ (d & e)) | (p13 & (~a));
+var y3 = (~(p11 | f)) & (p9 ^ g);
+var y4 = (p17 & (h | i)) ^ (p12 & (~j));
+var y5 = (p10 | (a ^ j)) & (~(g & h));
+var y6 = (p16 ^ (b & i)) | (p19 & (~e));
+var y7 = (p14 & ((c | d) | e)) ^ (~(p13 & a));
+var y8 = (~((p1 ^ p2) & (p3 | p4))) ^ (p20 & a);
+print y1;
+print y2;
+print y3;
+print y4;
+print y5;
+print y6;
+print y7;
+print y8;

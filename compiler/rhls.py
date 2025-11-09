@@ -3,6 +3,7 @@
 #L evel
 #S ynthesis
 
+#RDT, RC, RHC, 
 
 import sys
 from pathlib import Path
@@ -10,12 +11,12 @@ from .errors import HAD_ERROR, HAD_RUNTIME_ERROR
 from .token import Tok, Token
 from .parser import Parser
 from .lexer import Lexer
-from .AstPPrinter import AstPrinter
-from .interpreter import Interpreter
+#from .old.AstPPrinter import AstPrinter
+#from .interpreter import Interpreter
 from .netlistPrinter import NetlistGenerator
 
 
-interpreter = Interpreter()
+#interpreter = Interpreter()
 net = NetlistGenerator()
 
 
@@ -63,4 +64,8 @@ def run(source: str) -> None:
     #interpreter.interpret(statements)
     net.create_netlist(statements)
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    file = sys.argv[1:]
+    #bruh
+    if str(file[0])[-4:] != '.rhc':
+            raise TypeError("Filetype must be .rhc")
+    main(file)

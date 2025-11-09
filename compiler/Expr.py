@@ -1,7 +1,7 @@
 #Created from tools/GenerateAst.py
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from interpreter import Token
+from .token import Token
 from typing import TypeVar, Generic
 
 #Allows for subtypes to be accepted
@@ -22,6 +22,9 @@ class ExprVisitor(ABC, Generic[T_co]):
 
     @abstractmethod
     def visit_binary_expr(self, node: "Binary") -> T_co: ...
+
+    @abstractmethod
+    def visit_call_expr(self, node: "Call") -> T_co: ...
 
     @abstractmethod
     def visit_grouping_expr(self, node: "Grouping") -> T_co: ...
@@ -60,6 +63,16 @@ class Binary(Expr):
     
     def accept(self, visitor: 'ExprVisitor[T_co]') -> T_co:
         return visitor.visit_binary_expr(self)
+
+ 
+@dataclass(frozen=True, slots=True)
+class Call(Expr):
+    callee: Expr
+    paren: Token
+    arguments: list[Expr]
+    
+    def accept(self, visitor: 'ExprVisitor[T_co]') -> T_co:
+        return visitor.visit_call_expr(self)
 
  
 @dataclass(frozen=True, slots=True)
