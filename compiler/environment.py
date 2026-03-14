@@ -10,7 +10,7 @@ class Environment:
         self.values: dict[str, object] = {} 
 
     def get(self, name: Token) -> object:
-        if name.lexeme in self.values.keys():
+        if name.lexeme in self.values:
             return self.values[name.lexeme]
 
         #Check if variable is defined in local scope recursively
@@ -23,7 +23,7 @@ class Environment:
         self.values[name] = value
 
     def assign(self, name: Token, value: object) -> None:
-        if name.lexeme in self.values.keys():
+        if name.lexeme in self.values:
             self.values[name.lexeme] = value
             return
 

@@ -67,8 +67,8 @@ class NetlistGenerator(ExprVisitor[object], StmtVisitor[None]):
             self.outputs = {x for x in self.driven if x not in self.seen}
             if len(self.outputs) == 0: self.outputs = None
 
-            self.nets = {f't{x}' for x in range(1, self.temp_id + 1)}
-            self.nets = self.nets | self.seen | self.driven
+            self.nets = self.seen | self.driven
+            self.nets.update(f't{x}' for x in range(1, self.temp_id + 1))
 
             self._reduce_function(self.operations[-1], self.inputs)
 

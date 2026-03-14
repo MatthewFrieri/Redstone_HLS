@@ -10,6 +10,7 @@ T_co = TypeVar('T_co', covariant=True)
  
 #Abstract Expr Interface - Not to be instantiated directly
 class Expr(ABC):
+    __slots__ = ()
     @abstractmethod
     def accept(self, visitor: 'ExprVisitor[T_co]') -> T_co:
         pass
@@ -17,6 +18,7 @@ class Expr(ABC):
  
 #Abstract Visitor Interface - Not to be instantiated directly
 class ExprVisitor(ABC, Generic[T_co]):
+    __slots__ = ()
     @abstractmethod
     def visit_assign_expr(self, node: "Assign") -> T_co: ...
 

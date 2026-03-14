@@ -47,7 +47,7 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
     
     def _stringify(self, obj: object) -> str:
         if obj is None: return "None"
-        if isinstance(obj, numbers.Number):
+        if isinstance(obj, (int, float)):
             text = str(obj)
             if text.endswith('.0'):
                 text = text[0:len(text)-2]
@@ -57,7 +57,7 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
 
     def _checkNumberOperands(self, operator: Token, *operands: object) -> None:
         for op in operands: 
-            if not isinstance(op, numbers.Number):
+            if not isinstance(op, (int, float)):
                 raise RuntimeError_(operator, "Operand(s) must be number(s).")
 
         return
@@ -114,7 +114,7 @@ class Interpreter(ExprVisitor[object], StmtVisitor[None]):
 
             case Tok.PLUS:
                 #Overload: Arithmetic addition and String concat
-                if isinstance(left, numbers.Number) and isinstance(right, numbers.Number):
+                if isinstance(left, (int, float)) and isinstance(right, (int, float)):
                     return float(left) + float(right)
 
                 if isinstance(left, str) and isinstance(right, str):

@@ -16,6 +16,8 @@ from .Expr import Expr
 
 #Abstract Stmt Interface - Not to be instantiated directly
 class Stmt(ABC):
+    __slots__ = ()
+    
     @abstractmethod
     def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
         pass

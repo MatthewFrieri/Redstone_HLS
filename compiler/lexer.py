@@ -131,8 +131,13 @@ class Lexer:
             case '/':
                 if self._match('/'):
                     #Ignore comments (//)
-                    while(self._peek() != '\n' and not self._at_end()):
-                        self._advance()
+                    next_newline = self.source.find('\n', self.current)
+                    if next_newline != -1:
+                        self.col += (next_newline - self.current)
+                        self.current = next_newline
+                    else:
+                        self.col += (len(self.source) - self.current)
+                        self.current = len(self.source)
                 else:
                     self._add_token(Tok.DIVIDE)
 
