@@ -16,6 +16,7 @@ from .Expr import Expr
 
 #Abstract Stmt Interface - Not to be instantiated directly
 class Stmt(ABC):
+    __slots__ = ()
     @abstractmethod
     def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
         pass
@@ -23,6 +24,7 @@ class Stmt(ABC):
  
 #Abstract Visitor Interface - Not to be instantiated directly
 class StmtVisitor(ABC, Generic[T_co]):
+    __slots__ = ()
     @abstractmethod
     def visit_block_stmt(self, node: "Block") -> T_co: ...
 
