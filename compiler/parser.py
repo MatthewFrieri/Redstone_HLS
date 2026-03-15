@@ -89,13 +89,9 @@ class Parser:
             if self.previous().kind == Tok.SEMICOLON:
                 return
             
-            match self.peek().kind:
-                case Tok.FUNCTION: ...
-                case Tok.VAR: ...
-                case Tok.FOR: ...
-                case Tok.IF: ...
-                case Tok.WHILE: ...
-                case Tok.PRINT: ...
+            kind = self.peek().kind
+            if kind in (Tok.FUNCTION, Tok.VAR, Tok.FOR, Tok.IF, Tok.WHILE, Tok.PRINT):
+                return
             
             self.advance()
 
@@ -135,32 +131,27 @@ class Parser:
 
     #Helper functions
     def match(self, *types: Tok) -> bool:
-        for t in types:
-            if self.check(t):
-                self.advance()
-                return True
-             
+        curr_token = self.tokens[self.current]
+        if curr_token.kind != Tok.EOF and curr_token.kind in types:
+            self.current += 1
+            return True
         return False
 
     def check(self, type_: Tok) -> bool:
-        if self.is_at_end():
-            return False
-        return self.peek().kind == type_
-
+        curr_token = self.tokens[self.current]
+        return curr_token.kind != Tok.EOF and curr_token.kind == type_
 
     def advance(self) -> Token:
-        if not self.is_at_end(): self.current +=1
-        return self.previous()
+        if self.tokens[self.current].kind != Tok.EOF:
+            self.current += 1
+        return self.tokens[self.current - 1]
     
-
     def is_at_end(self) -> bool:
-        return self.peek().kind == Tok.EOF
+        return self.tokens[self.current].kind == Tok.EOF
     
-
     def peek(self) -> Token:
         return self.tokens[self.current]
     
-
     def previous(self) -> Token:
         return self.tokens[self.current - 1]
 
