@@ -20,12 +20,12 @@ def error(line: int | None = None, col: int | None = None, token: Token | None =
 #lmao this naming is so confusing should fix
 def _RuntimeError(error: RuntimeError_) -> None:
     global HAD_RUNTIME_ERROR
-    print(f'{error.message}\n [line {error.token.line}, col {error.token.col}]', file=sys.stderr)
+    sys.stderr.write(f'{error.message}\n [line {error.token.line}, col {error.token.col}]\n')
     HAD_RUNTIME_ERROR = True
 
 def report(line: int, col: int, where: str, message: str) -> None:
     global HAD_ERROR
-    print(f"[line {line}, col {col}] Error {where}: {message}", file=sys.stderr)
+    sys.stderr.write(f"[line {line}, col {col}] Error {where}: {message}\n")
     HAD_ERROR = True
 
 

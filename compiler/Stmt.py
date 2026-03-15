@@ -15,31 +15,26 @@ from .Expr import Expr
 
 
 #Abstract Stmt Interface - Not to be instantiated directly
-class Stmt(ABC):
-    @abstractmethod
+class Stmt:
+    __slots__ = ()
     def accept(self, visitor: 'StmtVisitor[T_co]') -> T_co:
         pass
  
  
 #Abstract Visitor Interface - Not to be instantiated directly
-class StmtVisitor(ABC, Generic[T_co]):
-    @abstractmethod
-    def visit_block_stmt(self, node: "Block") -> T_co: ...
+class StmtVisitor(Generic[T_co]):
+    __slots__ = ()
+    def visit_block_stmt(self, node: "Block") -> T_co: pass
 
-    @abstractmethod
-    def visit_expression_stmt(self, node: "Expression") -> T_co: ...
+    def visit_expression_stmt(self, node: "Expression") -> T_co: pass
 
-    @abstractmethod
-    def visit_if_stmt(self, node: "If") -> T_co: ...
+    def visit_if_stmt(self, node: "If") -> T_co: pass
 
-    @abstractmethod
-    def visit_print_stmt(self, node: "Print") -> T_co: ...
+    def visit_print_stmt(self, node: "Print") -> T_co: pass
 
-    @abstractmethod
-    def visit_var_stmt(self, node: "Var") -> T_co: ...
+    def visit_var_stmt(self, node: "Var") -> T_co: pass
 
-    @abstractmethod
-    def visit_while_stmt(self, node: "While") -> T_co: ...
+    def visit_while_stmt(self, node: "While") -> T_co: pass
 
     
 
