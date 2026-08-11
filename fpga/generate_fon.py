@@ -95,7 +95,7 @@ class GenerateFON:
             n = n_wires + i
             sb = n - self.SIZE * self.width
             board["ws"][str(n)] = {"used": False, "sbs": [str(sb)], "in_cb": None, "output": None}
-            board["inputs"][str(i)] = {"w": str(n), "node_id": None}
+            board["inputs"][str(i)] = {"w": str(n)}
 
         # Generate outputs
         for i in range(self.n_outputs):

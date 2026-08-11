@@ -13,19 +13,20 @@ class NodeType(Enum):
 
 class Node:
     _curr_id = 0
-    level_mapping = defaultdict(list)
-    level_mapping: dict[int, list["Node"]]
+    level_mapping: dict[int, list["Node"]] = defaultdict(list)
     max_level = float("-inf")
 
     def __init__(
             self, 
             type: NodeType, 
             left: Optional["Node"] = None, 
-            right: Optional["Node"] = None
+            right: Optional["Node"] = None,
+            io_id: Optional[int] = None,
         ):
         self.type = type
         self.left = left
         self.right = right
+        self.io_id = io_id
 
         self.id = Node._curr_id
         Node._curr_id += 1

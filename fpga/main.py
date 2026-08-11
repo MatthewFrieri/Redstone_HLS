@@ -7,17 +7,18 @@ tree = Node(
         NodeType.OR, 
         Node(
             NodeType.NOT, 
-            Node(NodeType.INPUT),
+            Node(NodeType.INPUT, io_id=1),
         ),
         Node(
             NodeType.NOT, 
             Node(
                 NodeType.AND, 
-                Node(NodeType.INPUT),
-                Node(NodeType.INPUT),
+                Node(NodeType.INPUT, io_id=0),
+                Node(NodeType.INPUT, io_id=2),
             )
         ),
-    )
+    ),
+    io_id=2
 )
 
 # tree = Node(
@@ -32,7 +33,7 @@ tree = Node(
 #     ),
 # )
 
-for k, v in tree.level_mapping.items():
-    print(f"level={k}, nodes={v}")
+# for k, v in tree.level_mapping.items():
+#     print(f"level={k}, nodes={v}")
 
-board = Board(tree)
+board = Board(tree, "fpga/fon_2x2_3x3.json")

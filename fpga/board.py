@@ -3,40 +3,29 @@ from fpga.node import Node, NodeType
 
 class Board:
 
-    def __init__(self, tree: Node):
+    def __init__(self, tree: Node, fon_path: str):
         self.tree = tree
-        self._init_board()
-        self._place_inputs()
+        self._init_board(fon_path)
+        self._validate()
         self._place()
 
-    def _init_board(self) -> None:
-        with open("fpga/board.json", "r") as f:
+    def _init_board(self, fon_path: str) -> None:
+        with open(fon_path, "r") as f:
             self.board = json.load(f)
 
-        # Create sbs dict so it's a bit easier to manually make the json
-        sbs = {}
-        for wire_id, wire_dict in self.board["ws"].items():
-            for sb_id in wire_dict["sbs"]:
-                if sb_id not in sbs:
-                    sbs[sb_id] = {"ws": [], "conns": {}}
-                sbs[sb_id]["ws"].append(wire_id)
-        self.board["sbs"] = sbs
-
-        # Add wires to in_cbs dict so it's a bit easier to manually make the json
-        for wire_id, wire_dict in self.board["ws"].items():
-            in_cb_id = wire_dict["in_cb"]
-            if in_cb_id is not None:
-                self.board["in_cbs"][in_cb_id]["ws"].append(wire_id)
-
-    def _place_inputs(self) -> None:
+    def _validate(self) -> None:
         for node in self.tree.level_mapping[0]:
-            for input in self.board["inputs"].values():
-                if input["node_id"] is None:
-                    input["node_id"] = node.id
-                    break
-
-    def _get_free_component_id(self, component_type: str) -> str:
-        for k, v in self.board[component_type].items():
+            if str(node.io_id) not in self.board["inputs"]:
+                raise ValueError(f"Expression tree has INPUT with io_id out of bounds: {node.io_id}")
+        for node in self.tree.level_mapping[self.tree.max_level]:
+            if str(node.io_id) not in self.board["outputs"]:
+                raise ValueError(f"Expression tree has OUTPUT with io_id out of bounds: {node.io_id}")
+        n_gates = sum(len(self.tree.level_mapping[i]) for i in range(1, self.tree.max_level))
+        if n_gates > len(self.board["clbs"]):
+            raise ValueError(f"Too many gates in expression tree: {n_gates}")
+        
+    def _get_free_clb_id(self) -> str:
+        for k, v in self.board["clbs"].items():
             if v["node_id"] is None:
                 return k
 
@@ -61,7 +50,7 @@ class Board:
             elif curr_type == "outputs":
                 pass
             else:
-                raise ValueError("Bad type={curr_type}")
+                raise ValueError(f"Bad type={curr_type}")
 
     def _place(self) -> None:
         """
@@ -74,8 +63,13 @@ class Board:
             print(f"\nLEVEL={level}")
             for node in self.tree.level_mapping[level]:
 
-                target_type = "outputs" if node.type == NodeType.OUTPUT else "clbs"
-                target_id = self._get_free_component_id(target_type)
+                if node.type == NodeType.OUTPUT:
+                    target_type = "outputs"
+                    target_id = str(node.io_id)
+                else:
+                    target_type = "clbs"
+                    target_id = self._get_free_clb_id()
+
                 self.board[target_type][target_id]["node_id"] = node.id
 
                 # Wire the children of the node to its target
@@ -83,10 +77,15 @@ class Board:
                 for child in [node.left, node.right]:
                     if child is None:
                         continue
-                    curr_type = "inputs" if child.type == NodeType.INPUT else "clbs"
-                    curr_id = [k for k, v in self.board[curr_type].items() if v["node_id"] == child.id][0]
-                    delay, path = self._dfs((None, None), (curr_type, curr_id), (target_type, target_id), 0, [])
 
+                    if child.type == NodeType.INPUT:
+                        curr_type = "inputs"
+                        curr_id = str(child.io_id)
+                    else:
+                        curr_type = "clbs"
+                        curr_id = [k for k, v in self.board[curr_type].items() if v["node_id"] == child.id][0]
+
+                    delay, path = self._dfs((None, None), (curr_type, curr_id), (target_type, target_id), 0, [])
                     if delay == float("inf"):
                         raise RuntimeError("Path impossible")            
 
