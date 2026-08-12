@@ -23,6 +23,23 @@ class GenerateFON:
     def _get_n_wires(self) -> int:
         return self.SIZE * ((2 * self.width + 1) * self.height + self.width)
 
+    def _init_board(self) -> dict:
+        return {
+            "meta": {
+                "width": self.width,
+                "height": self.height,
+                "n_inputs": self.n_inputs,
+                "n_outputs": self.n_outputs,
+                "channel_size": self.SIZE,
+            },
+            "inputs": {},
+            "outputs": {},
+            "sbs": {},
+            "in_cbs": {},
+            "clbs": {},
+            "out_cbs": {},
+        }
+
     def _generate_ws(self, board: dict) -> None:
 
         n_wires = self._get_n_wires()
@@ -65,20 +82,20 @@ class GenerateFON:
 
                 out_cb_w = self.SIZE * ((self.width + 1) * (j+1) + n)
                 board["out_cbs"][sn] = {
-                    "ws": [str(out_cb_w + k) for k in range(self.SIZE)], 
+                    "ws": [str(out_cb_w + k) for k in range(self.SIZE)],
                     "chosen": None
                 }
 
                 in_cb_0_w = self.SIZE * ((self.width + 1) * (j+1) + n-1)
                 board["in_cbs"][str(2*n)] = {
-                    "ws": [str(in_cb_0_w + k) for k in range(self.SIZE)], 
-                    "chosen": None, 
+                    "ws": [str(in_cb_0_w + k) for k in range(self.SIZE)],
+                    "chosen": None,
                     "clb": sn
                 }
                 in_cb_1_w = self.SIZE * ((self.width + 1) * (j+2) + n-1)
                 board["in_cbs"][str(2*n+1)] = {
-                    "ws": [str(in_cb_1_w + k) for k in range(self.SIZE)], 
-                    "chosen": None, 
+                    "ws": [str(in_cb_1_w + k) for k in range(self.SIZE)],
+                    "chosen": None,
                     "clb": sn
                 }
 
@@ -113,14 +130,7 @@ class GenerateFON:
 
     def generate_and_save(self) -> None:
 
-        board = {
-            "inputs": {},
-            "outputs": {},
-            "sbs": {},
-            "in_cbs": {},
-            "clbs": {},
-            "out_cbs": {},
-        }
+        board = self._init_board()
         self._generate_ws(board)
         self._generate_cbs_and_clbs(board)
         self._generate_inputs_outputs(board)
