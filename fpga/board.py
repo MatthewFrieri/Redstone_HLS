@@ -1,13 +1,12 @@
 import json
 from fpga.node import Node, NodeType
 
-class Board:
+class Router:
 
     def __init__(self, tree: Node, fon_path: str):
         self.tree = tree
         self._init_board(fon_path)
         self._validate()
-        self._place()
 
     def _init_board(self, fon_path: str) -> None:
         with open(fon_path, "r") as f:
@@ -15,44 +14,16 @@ class Board:
 
     def _validate(self) -> None:
         for node in self.tree.level_mapping[0]:
-            if str(node.io_id) not in self.board["inputs"]:
+            if node.io_id >= self.board["meta"]["n_inputs"]:
                 raise ValueError(f"Expression tree has INPUT with io_id out of bounds: {node.io_id}")
         for node in self.tree.level_mapping[self.tree.max_level]:
-            if str(node.io_id) not in self.board["outputs"]:
+            if node.io_id >= self.board["meta"]["n_outputs"]:
                 raise ValueError(f"Expression tree has OUTPUT with io_id out of bounds: {node.io_id}")
         n_gates = sum(len(self.tree.level_mapping[i]) for i in range(1, self.tree.max_level))
         if n_gates > len(self.board["clbs"]):
             raise ValueError(f"Too many gates in expression tree: {n_gates}")
-        
-    def _get_free_clb_id(self) -> str:
-        for k, v in self.board["clbs"].items():
-            if v["node_id"] is None:
-                return k
 
-    def _apply_path(self, path: list) -> None:
-        for i in range(len(path) - 1):
-            prev_type, prev_id = path[i]
-            curr_type, curr_id = path[i+1]
-            next_type, next_id = (None, None) if i+2 >= len(path) else path[i+2]
-
-            curr = self.board[curr_type][curr_id]
-
-            if curr_type == "ws":
-                curr["used"] = True
-            elif curr_type == "sbs":
-                curr["conns"][prev_id] = next_id
-            elif curr_type == "in_cbs":
-                curr["chosen"] = prev_id
-            elif curr_type == "clbs":
-                pass
-            elif curr_type == "out_cbs":
-                curr["chosen"] = next_id
-            elif curr_type == "outputs":
-                pass
-            else:
-                raise ValueError(f"Bad type={curr_type}")
-
-    def _place(self) -> None:
+    def route(self) -> dict:
         """
         Place each level of the tree by modifying the global state of `self.board`.
         """
@@ -96,6 +67,35 @@ class Board:
                 total_delay += max(delays)
             level += 1
             print(f"\ntotal delay={total_delay}")
+        return self.board
+        
+    def _get_free_clb_id(self) -> str:
+        for k, v in self.board["clbs"].items():
+            if v["node_id"] is None:
+                return k
+
+    def _apply_path(self, path: list) -> None:
+        for i in range(len(path) - 1):
+            prev_type, prev_id = path[i]
+            curr_type, curr_id = path[i+1]
+            next_type, next_id = (None, None) if i+2 >= len(path) else path[i+2]
+
+            curr = self.board[curr_type][curr_id]
+
+            if curr_type == "ws":
+                curr["used"] = True
+            elif curr_type == "sbs":
+                curr["conns"][prev_id] = next_id
+            elif curr_type == "in_cbs":
+                curr["chosen"] = prev_id
+            elif curr_type == "clbs":
+                pass
+            elif curr_type == "out_cbs":
+                curr["chosen"] = next_id
+            elif curr_type == "outputs":
+                pass
+            else:
+                raise ValueError(f"Bad type={curr_type}")
         
     def _dfs(
         self, 
