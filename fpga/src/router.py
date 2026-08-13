@@ -1,5 +1,5 @@
 import json
-from fpga.node import Node, NodeType
+from fpga.src.node import Node, NodeType
 
 class Router:
 

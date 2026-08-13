@@ -1,5 +1,5 @@
-from fpga.node import Node, NodeType
-from fpga.const import CDir
+from fpga.src.node import Node, NodeType
+from fpga.src.const import CDir
 
 class BitstreamGenerator:
     """
