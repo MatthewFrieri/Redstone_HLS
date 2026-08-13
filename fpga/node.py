@@ -13,6 +13,7 @@ class NodeType(Enum):
 
 class Node:
     _curr_id = 0
+    id_mapping: dict[int, "Node"] = {}
     level_mapping: dict[int, list["Node"]] = defaultdict(list)
     max_level = float("-inf")
 
@@ -29,6 +30,7 @@ class Node:
         self.io_id = io_id
 
         self.id = Node._curr_id
+        Node.id_mapping[self.id] = self
         Node._curr_id += 1
 
         self.level = max(getattr(left, "level", -1), getattr(right, "level", -1)) + 1
