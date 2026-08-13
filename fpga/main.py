@@ -1,4 +1,5 @@
-from fpga.board import Board
+from fpga.bitstream import BitstreamGenerator
+from fpga.router import Router
 from fpga.node import Node, NodeType
 
 tree = Node(
@@ -21,19 +22,8 @@ tree = Node(
     io_id=2
 )
 
-# tree = Node(
-#     NodeType.OUTPUT,
-#     Node(
-#         NodeType.OR, 
-#         Node(NodeType.INPUT),
-#         Node(
-#             NodeType.NOT, 
-#             Node(NodeType.INPUT),
-#         )
-#     ),
-# )
+router = Router(tree, "fpga/fon_3x2_3x3.json")
+routed_fon = router.route()
 
-# for k, v in tree.level_mapping.items():
-#     print(f"level={k}, nodes={v}")
-
-board = Board(tree, "fpga/fon_2x2_3x3.json")
+bitstream = BitstreamGenerator(tree, routed_fon)
+bitstream.generate_and_save()

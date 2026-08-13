@@ -139,3 +139,5 @@ class GenerateFON:
         filename = f"fon_{self.width}x{self.height}_{self.n_inputs}x{self.n_outputs}.json"
         with open(filename, "w") as f:
             json.dump(board, f)
+
+GenerateFON(3,2,3,3).generate_and_save()
