@@ -1,6 +1,6 @@
-from fpga.bitstream import BitstreamGenerator
-from fpga.router import Router
-from fpga.node import Node, NodeType
+from fpga.src.bitstream import BitstreamGenerator
+from fpga.src.router import Router
+from fpga.src.node import Node, NodeType
 
 tree = Node(
     NodeType.OUTPUT,
@@ -22,7 +22,7 @@ tree = Node(
     io_id=2
 )
 
-router = Router(tree, "fpga/fon_3x2_3x3.json")
+router = Router(tree, "fpga/fon/fon_3x2_3x3.json")
 routed_fon = router.route()
 
 bitstream = BitstreamGenerator(tree, routed_fon)
