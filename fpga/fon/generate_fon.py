@@ -44,7 +44,7 @@ class GenerateFON:
 
         n_wires = self._get_n_wires()
         board["ws"] = {
-            str(i): {"source": {}, "sbs": [], "in_cb": None, "output": None}
+            str(i): {"source": None, "sbs": [], "in_cb": None, "output": None}
             for i in range(n_wires)
         }
 
@@ -111,14 +111,14 @@ class GenerateFON:
         for i in range(self.n_inputs):
             n = n_wires + i
             sb = n - self.SIZE * self.width
-            board["ws"][str(n)] = {"source": {}, "sbs": [str(sb)], "in_cb": None, "output": None}
+            board["ws"][str(n)] = {"source": None, "sbs": [str(sb)], "in_cb": None, "output": None}
             board["inputs"][str(i)] = {"w": str(n)}
 
         # Generate outputs
         for i in range(self.n_outputs):
             n = n_wires + self.n_inputs + i
             sb = self.SIZE * ((2*self.width+1) * (i // 3) + self.width) + i % 3
-            board["ws"][str(n)] = {"source": {}, "sbs": [str(sb)], "in_cb": None, "output": str(i)}
+            board["ws"][str(n)] = {"source": None, "sbs": [str(sb)], "in_cb": None, "output": str(i)}
             board["outputs"][str(i)] = {"node_id": None}
 
     def _generate_sbs(self, board: dict) -> None:
