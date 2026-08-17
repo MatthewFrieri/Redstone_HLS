@@ -40,5 +40,7 @@ class Node:
 
     def __repr__(self):
         # return f"Node(id={self.id}, lvl={self.level}, type={self.type})"
-        return f"Node(id={self.id}, type={self.type}, left_id={None if self.left is None else self.left.id}, right_id={None if self.right is None else self.right.id})"
+        return f"Node(id={self.id}, type={self.type}, " \
+               f"left_id={None if self.left is None else self.left.id}, " \
+               f"right_id={None if self.right is None else self.right.id})"
 

@@ -3,8 +3,17 @@ from fpga.src.node import Node, NodeType
 
 class Router:
 
-    def __init__(self, tree: Node, fon_path: str):
-        self.tree = tree
+    DELAYS = {
+        "inputs": 0,
+        "ws": 0,
+        "sbs": 1,
+        "in_cbs": 1,
+        "out_cbs": 1,
+        "clbs": 3,
+        "outputs": 0,
+    }
+
+    def __init__(self, fon_path: str):
         self._init_board(fon_path)
         self._validate()
 
@@ -13,13 +22,13 @@ class Router:
             self.board = json.load(f)
 
     def _validate(self) -> None:
-        for node in self.tree.level_mapping[0]:
+        for node in Node.level_mapping[0]:
             if node.io_id >= self.board["meta"]["n_inputs"]:
                 raise ValueError(f"Expression tree has INPUT with io_id out of bounds: {node.io_id}")
-        for node in self.tree.level_mapping[self.tree.max_level]:
+        for node in Node.level_mapping[Node.max_level]:
             if node.io_id >= self.board["meta"]["n_outputs"]:
                 raise ValueError(f"Expression tree has OUTPUT with io_id out of bounds: {node.io_id}")
-        n_gates = sum(len(self.tree.level_mapping[i]) for i in range(1, self.tree.max_level))
+        n_gates = sum(len(Node.level_mapping[i]) for i in range(1, Node.max_level))
         if n_gates > len(self.board["clbs"]):
             raise ValueError(f"Too many gates in expression tree: {n_gates}")
 
@@ -30,9 +39,9 @@ class Router:
 
         total_delay = 0
         level = 1
-        while level <= self.tree.max_level:
+        while level <= Node.max_level:
             print(f"\nLEVEL={level}")
-            for node in self.tree.level_mapping[level]:
+            for node in Node.level_mapping[level]:
 
                 if node.type == NodeType.OUTPUT:
                     target_type = "outputs"
@@ -115,10 +124,11 @@ class Router:
         curr_type, curr_id = curr
         target_type, target_id = target
         new_path = path + [curr]
+        new_delay = delay + Router.DELAYS[curr_type]
         
         if curr_type == "inputs":
             input = self.board[curr_type][curr_id]
-            return self._dfs(curr, ("ws", input["w"]), target, delay, new_path)
+            return self._dfs(curr, ("ws", input["w"]), target, new_delay, new_path)
         
         elif curr_type == "ws":
             w = self.board[curr_type][curr_id]
@@ -132,7 +142,7 @@ class Router:
 
             min_delay, best_path = float("inf"), None
             for sb_id in sb_ids:
-                res_delay, res_path = self._dfs(curr, ("sbs", sb_id), target, delay, new_path)
+                res_delay, res_path = self._dfs(curr, ("sbs", sb_id), target, new_delay, new_path)
                 if res_delay < min_delay:
                     min_delay = res_delay
                     best_path = res_path
@@ -142,14 +152,14 @@ class Router:
                 in_cb_available = self.board["in_cbs"][in_cb_id]["chosen"] is None
                 if in_cb_available:
 
-                    res_delay, res_path = self._dfs(curr, ("in_cbs", in_cb_id), target, delay, new_path)
+                    res_delay, res_path = self._dfs(curr, ("in_cbs", in_cb_id), target, new_delay, new_path)
                     if res_delay < min_delay:
                         min_delay = res_delay
                         best_path = res_path
 
             output_id = w["output"]
             if output_id is not None and target_type == "outputs":
-                res_delay, res_path = self._dfs(curr, ("outputs", output_id), target, delay, new_path)
+                res_delay, res_path = self._dfs(curr, ("outputs", output_id), target, new_delay, new_path)
                 if res_delay < min_delay:
                     min_delay = res_delay
                     best_path = res_path
@@ -172,7 +182,7 @@ class Router:
 
                 sb["conns"][prev_id] = w_id
 
-                res_delay, res_path = self._dfs(curr, ("ws", w_id), target, delay + 1, new_path)
+                res_delay, res_path = self._dfs(curr, ("ws", w_id), target, new_delay, new_path)
                 if res_delay < min_delay:
                     min_delay = res_delay
                     best_path = res_path
@@ -184,7 +194,7 @@ class Router:
         elif curr_type == "in_cbs":
             in_cb = self.board[curr_type][curr_id]
             in_cb["chosen"] = prev_id
-            res = self._dfs(curr, ("clbs", in_cb["clb"]), target, delay + 1, new_path)
+            res = self._dfs(curr, ("clbs", in_cb["clb"]), target, new_delay, new_path)
             in_cb["chosen"] = None
             return res
 
@@ -196,7 +206,7 @@ class Router:
                     return float("inf"), new_path
 
             clb = self.board[curr_type][curr_id]
-            return self._dfs(curr, ("out_cbs", clb["out_cb"]), target, delay + 3, new_path)
+            return self._dfs(curr, ("out_cbs", clb["out_cb"]), target, new_delay, new_path)
 
         elif curr_type == "out_cbs":
             out_cb = self.board[curr_type][curr_id]
@@ -208,7 +218,7 @@ class Router:
             for w_id in w_ids:
                 out_cb["chosen"] = w_id
 
-                res_delay, res_path = self._dfs(curr, ("ws", w_id), target, delay + 1, new_path)
+                res_delay, res_path = self._dfs(curr, ("ws", w_id), target, new_delay, new_path)
                 if res_delay < min_delay:
                     min_delay = res_delay
                     best_path = res_path
@@ -219,7 +229,7 @@ class Router:
 
         elif curr_type == "outputs":
             if target_type == curr_type and target_id == curr_id:
-                return delay, new_path
+                return new_delay, new_path
             return float("inf"), new_path
 
         raise ValueError(f"DFS, bad curr_type={curr_type}")
