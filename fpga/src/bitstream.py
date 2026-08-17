@@ -114,7 +114,7 @@ class BitstreamGenerator:
 
                 # Fill all with air first
                 for k in range(4):
-                    self._set_air(x, y+2*k, z)
+                    self._set_air(x, y, z+2*k)
 
                 gate_type = self.tree.id_mapping[clb["node_id"]].type
                 if gate_type == NodeType.AND:
