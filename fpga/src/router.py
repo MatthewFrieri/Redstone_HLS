@@ -1,18 +1,7 @@
 import json
-from typing import Optional
 from fpga.src.node import Node, NodeType
 
 class Router:
-
-    DELAYS = {
-        "inputs": 0,
-        "ws": 0,
-        "sbs": 1,
-        "in_cbs": 1,
-        "out_cbs": 1,
-        "clbs": 3,
-        "outputs": 0,
-    }
 
     def __init__(self, fon_path: str):
         self._init_board(fon_path)
@@ -113,7 +102,7 @@ class Router:
             curr = self.board[curr_type][curr_id]
 
             if curr_type == "ws":
-                if curr["source"] and curr["source"] != source:
+                if curr["source"] is not None and curr["source"] != source:
                     raise ValueError("Wire source got overwritten")
                 curr["source"] = source
             elif curr_type == "sbs":
@@ -128,6 +117,27 @@ class Router:
                 pass
             else:
                 raise ValueError(f"Bad type={curr_type}")
+
+    def _get_cost(self, curr: tuple[str, str], source: tuple[str, str]) -> int:
+        curr_type, curr_id = curr
+
+        delay_cost = {
+            "inputs": 0,
+            "ws": 0,
+            "sbs": 1,
+            "in_cbs": 1,
+            "out_cbs": 1,
+            "clbs": 3,
+            "outputs": 0,
+        }
+
+        length_cost = 0
+        if curr_type == "ws":
+            w = self.board[curr_type][curr_id]
+            if w["source"] != source:
+                length_cost = 1
+
+        return delay_cost[curr_type] + length_cost
         
     def _dfs(
         self, 
@@ -148,7 +158,7 @@ class Router:
         curr_type, curr_id = curr
         target_type, target_id = target
         new_path = path + [curr]
-        new_delay = delay + Router.DELAYS[curr_type]
+        new_delay = delay + self._get_cost(curr, source)
 
         min_delay, best_path = float("inf"), None
         def dfs_helper(new_curr_type: str, new_curr_id: str):
