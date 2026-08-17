@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from fpga.src.node import Node, NodeType
 
 class Router:
@@ -65,7 +66,8 @@ class Router:
                         curr_type = "clbs"
                         curr_id = [k for k, v in self.board[curr_type].items() if v["node_id"] == child.id][0]
 
-                    delay, path = self._dfs((None, None), (curr_type, curr_id), (target_type, target_id), 0, [])
+                    
+                    delay, path = self._dfs((None, None), (curr_type, curr_id), (curr_type, curr_id), (target_type, target_id), 0, [])
                     if delay == float("inf"):
                         raise RuntimeError("Path impossible")            
 
@@ -83,24 +85,45 @@ class Router:
             if v["node_id"] is None:
                 return k
 
+    def _get_unused_w_ids(self) -> list[str]:
+        return [k for k, v in self.board["ws"].items() if not v.get("_used")]
+
+    @staticmethod
+    def _sb_add_conn(sb: dict, from_id: str, to_id: str) -> None:
+        if from_id in sb["conns"]:
+            sb["conns"][from_id].append(to_id)
+        else:
+            sb["conns"][from_id] = [to_id]
+
+    @staticmethod
+    def _sb_remove_conn(sb: dict, from_id: str, to_id: str) -> None:
+        sb["conns"][from_id].remove(to_id)
+        if len(sb["conns"][from_id]) == 0:
+            del sb["conns"][from_id]
+
     def _apply_path(self, path: list) -> None:
-        for i in range(len(path) - 1):
-            prev_type, prev_id = path[i]
-            curr_type, curr_id = path[i+1]
-            next_type, next_id = (None, None) if i+2 >= len(path) else path[i+2]
+        source = path[0]
+        for i in range(1, len(path)):
+            prev_type, prev_id = path[i-1]
+            curr_type, curr_id = path[i]
+            next_type, next_id = (None, None) if i+1 >= len(path) else path[i+1]
+            if curr_type == "clbs":
+                source = path[i]
 
             curr = self.board[curr_type][curr_id]
 
             if curr_type == "ws":
-                curr["used"] = True
+                if curr["source"] and curr["source"] != source:
+                    raise ValueError("Wire source got overwritten")
+                curr["source"] = source
             elif curr_type == "sbs":
-                curr["conns"][prev_id] = next_id
+                self._sb_add_conn(curr, prev_id, next_id)
             elif curr_type == "in_cbs":
                 curr["chosen"] = prev_id
             elif curr_type == "clbs":
                 pass
             elif curr_type == "out_cbs":
-                curr["chosen"] = next_id
+                curr["chosen"].append(next_id)
             elif curr_type == "outputs":
                 pass
             else:
@@ -110,6 +133,7 @@ class Router:
         self, 
         prev: tuple[str, str],
         curr: tuple[str, str],
+        source: tuple[str, str],
         target: tuple[str, str],
         delay: int,
         path: list
@@ -125,111 +149,82 @@ class Router:
         target_type, target_id = target
         new_path = path + [curr]
         new_delay = delay + Router.DELAYS[curr_type]
-        
+
+        min_delay, best_path = float("inf"), None
+        def dfs_helper(new_curr_type: str, new_curr_id: str):
+            nonlocal min_delay, best_path
+            res_delay, res_path = self._dfs(curr, (new_curr_type, new_curr_id), source, target, new_delay, new_path)
+            if res_delay < min_delay:
+                min_delay = res_delay
+                best_path = res_path
+
         if curr_type == "inputs":
             input = self.board[curr_type][curr_id]
-            return self._dfs(curr, ("ws", input["w"]), target, new_delay, new_path)
+            dfs_helper("ws", input["w"])
         
         elif curr_type == "ws":
             w = self.board[curr_type][curr_id]
-            if w["used"]:
-                raise ValueError(f"DFS, starting on a wire that's already used: {curr_id}, {path}")
-            w["used"] = True
+            w["_used"] = True
 
             sb_ids = w["sbs"]
             if prev_type == "sbs":
                 sb_ids = [sb_id for sb_id in sb_ids if sb_id != prev_id]  # filter out where we came from
-
-            min_delay, best_path = float("inf"), None
             for sb_id in sb_ids:
-                res_delay, res_path = self._dfs(curr, ("sbs", sb_id), target, new_delay, new_path)
-                if res_delay < min_delay:
-                    min_delay = res_delay
-                    best_path = res_path
+                dfs_helper("sbs", sb_id)
 
             in_cb_id = w["in_cb"]
             if in_cb_id is not None and target_type == "clbs":
-                in_cb_available = self.board["in_cbs"][in_cb_id]["chosen"] is None
-                if in_cb_available:
-
-                    res_delay, res_path = self._dfs(curr, ("in_cbs", in_cb_id), target, new_delay, new_path)
-                    if res_delay < min_delay:
-                        min_delay = res_delay
-                        best_path = res_path
+                if self.board["in_cbs"][in_cb_id]["chosen"] is None:
+                    dfs_helper("in_cbs", in_cb_id)
 
             output_id = w["output"]
             if output_id is not None and target_type == "outputs":
-                res_delay, res_path = self._dfs(curr, ("outputs", output_id), target, new_delay, new_path)
-                if res_delay < min_delay:
-                    min_delay = res_delay
-                    best_path = res_path
+                dfs_helper("outputs", output_id)
 
-            w["used"] = False
-            return min_delay, best_path
+            del w["_used"]
 
         elif curr_type == "sbs":
             sb = self.board[curr_type][curr_id]
             w_ids = sb["ws"]
-            w_ids = [w_id for w_id in w_ids if w_id != prev_id]  # filter out where we came from
-            used_ws = [k for k, v in self.board["ws"].items() if v["used"]]
-            w_ids = [w_id for w_id in w_ids if w_id not in used_ws]  # filter out where is already used
-
-            min_delay, best_path = float("inf"), None
+            w_ids = [w_id for w_id in w_ids if w_id in self._get_unused_w_ids()]
             for w_id in w_ids:
-
-                if prev_id in sb["conns"]:
-                    raise ValueError("DFS, sb fucked up")
-
-                sb["conns"][prev_id] = w_id
-
-                res_delay, res_path = self._dfs(curr, ("ws", w_id), target, new_delay, new_path)
-                if res_delay < min_delay:
-                    min_delay = res_delay
-                    best_path = res_path
-
-                del sb["conns"][prev_id]
-
-            return min_delay, best_path
+                w_source = self.board["ws"][w_id]["source"]
+                if not w_source or w_source == source:
+                    self._sb_add_conn(sb, prev_id, w_id)
+                    dfs_helper("ws", w_id)
+                    self._sb_remove_conn(sb, prev_id, w_id)
 
         elif curr_type == "in_cbs":
             in_cb = self.board[curr_type][curr_id]
             in_cb["chosen"] = prev_id
-            res = self._dfs(curr, ("clbs", in_cb["clb"]), target, new_delay, new_path)
+            dfs_helper("clbs", in_cb["clb"])
             in_cb["chosen"] = None
-            return res
-
-        elif curr_type == "clbs":
-            if target_type == curr_type:
-                if target_id == curr_id:
-                    return delay, new_path
-                if len(new_path) > 1:
-                    return float("inf"), new_path
-
-            clb = self.board[curr_type][curr_id]
-            return self._dfs(curr, ("out_cbs", clb["out_cb"]), target, new_delay, new_path)
 
         elif curr_type == "out_cbs":
             out_cb = self.board[curr_type][curr_id]
             w_ids = out_cb["ws"]
-            used_ws = [k for k, v in self.board["ws"].items() if v["used"]]
-            w_ids = [w_id for w_id in w_ids if w_id not in used_ws]  # filter out where is already used
+            w_ids = [w_id for w_id in w_ids if w_id in self._get_unused_w_ids()]  
 
-            min_delay, best_path = float("inf"), None
             for w_id in w_ids:
-                out_cb["chosen"] = w_id
+                w_source = self.board["ws"][w_id]["source"]
+                if not w_source or w_source == source:
+                    out_cb["chosen"].append(w_id)
+                    dfs_helper("ws", w_id)
+                    out_cb["chosen"].remove(w_id)
 
-                res_delay, res_path = self._dfs(curr, ("ws", w_id), target, new_delay, new_path)
-                if res_delay < min_delay:
-                    min_delay = res_delay
-                    best_path = res_path
+        elif curr_type == "clbs":
+            if target_type == curr_type:
+                if target_id == curr_id:
+                    return new_delay, new_path
+                if len(new_path) > 1:
+                    return float("inf"), new_path
 
-                out_cb["chosen"] = None
-
-            return min_delay, best_path
+            clb = self.board[curr_type][curr_id]
+            dfs_helper("out_cbs", clb["out_cb"])
 
         elif curr_type == "outputs":
             if target_type == curr_type and target_id == curr_id:
                 return new_delay, new_path
             return float("inf"), new_path
 
-        raise ValueError(f"DFS, bad curr_type={curr_type}")
+        return min_delay, best_path

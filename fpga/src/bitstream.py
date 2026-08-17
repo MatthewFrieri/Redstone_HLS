@@ -11,8 +11,7 @@ class BitstreamGenerator:
     CELL_HEIGHT = 12
     CHANNEL_GAP = 2
 
-    def __init__(self, tree: Node, routed_fon: dict):
-        self.tree = tree
+    def __init__(self, routed_fon: dict):
         self.fon = routed_fon
         self.commands = []
 
@@ -86,16 +85,16 @@ class BitstreamGenerator:
                 # out_cbs
                 out_cb_id = i + width * j
                 out_cb = self.fon["out_cbs"][str(out_cb_id)]
-                chosen = out_cb["chosen"]
-                if chosen is not None:
+                if out_cb["chosen"] is not None:
                     x = self.CELL_WIDTH*i + 12
                     z = self.CELL_HEIGHT*j + 6
                     for level in range(size):
                         y = -self.CHANNEL_GAP*level - 2
-                        if level == out_cb["ws"].index(chosen):
-                            self._set_repeater(x, y, z, CDir.EAST)
-                        else:
-                            self._set_air(x, y, z)
+                        self._set_air(x, y, z)
+                    for chosen in out_cb["chosen"]:
+                        level = out_cb["ws"].index(chosen)
+                        y = -self.CHANNEL_GAP*level - 2
+                        self._set_repeater(x, y, z, CDir.EAST)
 
     def _generate_clbs_bitstream(self) -> None:
         width, height, size = self._get_metadata()
@@ -116,7 +115,7 @@ class BitstreamGenerator:
                 for k in range(4):
                     self._set_air(x, y, z+2*k)
 
-                gate_type = self.tree.id_mapping[clb["node_id"]].type
+                gate_type = Node.id_mapping[clb["node_id"]].type
                 if gate_type == NodeType.AND:
                     self._set_dust(x, y, z+6)
                 if gate_type == NodeType.OR:
@@ -158,58 +157,58 @@ class BitstreamGenerator:
                     ]:
                         self._set_air(x + delta_x, y, z + delta_z)
 
-                    for k, v in sb["conns"].items():
-                        k, v = int(k), int(v)
-                        from_dir = self._get_wire_cdir_relative_to_sb(sb_id, k)
-                        to_dir = self._get_wire_cdir_relative_to_sb(sb_id, v)
-                        opposite_from_dir = CDir.get_opposite(from_dir)
+                    for from_id in sb["conns"].keys():
+                        for to_id in sb["conns"][from_id]:
+                            from_dir = self._get_wire_cdir_relative_to_sb(sb_id, int(from_id))
+                            to_dir = self._get_wire_cdir_relative_to_sb(sb_id, int(to_id))
+                            opposite_from_dir = CDir.get_opposite(from_dir)
 
-                        if from_dir == CDir.NORTH:
-                            if to_dir == CDir.EAST:
-                                self._set_dust(x+1, y, z-2)
-                                self._set_dust(x+2, y, z-2)
-                                self._set_repeater(x+2, y, z-1, opposite_from_dir)
-                            elif to_dir == CDir.SOUTH:
-                                self._set_repeater(x, y, z, to_dir)
-                            elif to_dir == CDir.WEST:
-                                self._set_dust(x-1, y, z-2)
-                                self._set_dust(x-2, y, z-2)
-                                self._set_repeater(x-2, y, z-1, opposite_from_dir)
+                            if from_dir == CDir.NORTH:
+                                if to_dir == CDir.EAST:
+                                    self._set_dust(x+1, y, z-2)
+                                    self._set_dust(x+2, y, z-2)
+                                    self._set_repeater(x+2, y, z-1, opposite_from_dir)
+                                elif to_dir == CDir.SOUTH:
+                                    self._set_repeater(x, y, z, to_dir)
+                                elif to_dir == CDir.WEST:
+                                    self._set_dust(x-1, y, z-2)
+                                    self._set_dust(x-2, y, z-2)
+                                    self._set_repeater(x-2, y, z-1, opposite_from_dir)
 
-                        elif from_dir == CDir.EAST:
-                            if to_dir == CDir.NORTH:
-                                self._set_dust(x+2, y, z-1)
-                                self._set_dust(x+2, y, z-2)
-                                self._set_repeater(x+1, y, z-2, opposite_from_dir)
-                            elif to_dir == CDir.SOUTH:
-                                self._set_dust(x+2, y, z+1)
-                                self._set_dust(x+2, y, z+2)
-                                self._set_repeater(x+1, y, z+2, opposite_from_dir)
-                            elif to_dir == CDir.WEST:
-                                self._set_dust(x-1, y-1, z)
-                                self._set_repeater(x+1, y-1, z, to_dir)
+                            elif from_dir == CDir.EAST:
+                                if to_dir == CDir.NORTH:
+                                    self._set_dust(x+2, y, z-1)
+                                    self._set_dust(x+2, y, z-2)
+                                    self._set_repeater(x+1, y, z-2, opposite_from_dir)
+                                elif to_dir == CDir.SOUTH:
+                                    self._set_dust(x+2, y, z+1)
+                                    self._set_dust(x+2, y, z+2)
+                                    self._set_repeater(x+1, y, z+2, opposite_from_dir)
+                                elif to_dir == CDir.WEST:
+                                    self._set_dust(x-1, y-1, z)
+                                    self._set_repeater(x+1, y-1, z, to_dir)
 
-                        elif from_dir == CDir.SOUTH:
-                            if to_dir == CDir.NORTH:
-                                self._set_repeater(x, y, z, to_dir)
-                            elif to_dir == CDir.EAST:
-                                self._set_dust(x+1, y, z+2)
-                                self._set_dust(x+2, y, z+2)
-                                self._set_repeater(x+2, y, z+1, opposite_from_dir)
-                            elif to_dir == CDir.WEST:
-                                self._set_dust(x-1, y, z+2)
-                                self._set_dust(x-2, y, z+2)
-                                self._set_repeater(x-2, y, z+1, opposite_from_dir)
+                            elif from_dir == CDir.SOUTH:
+                                if to_dir == CDir.NORTH:
+                                    self._set_repeater(x, y, z, to_dir)
+                                elif to_dir == CDir.EAST:
+                                    self._set_dust(x+1, y, z+2)
+                                    self._set_dust(x+2, y, z+2)
+                                    self._set_repeater(x+2, y, z+1, opposite_from_dir)
+                                elif to_dir == CDir.WEST:
+                                    self._set_dust(x-1, y, z+2)
+                                    self._set_dust(x-2, y, z+2)
+                                    self._set_repeater(x-2, y, z+1, opposite_from_dir)
 
-                        elif from_dir == CDir.WEST:
-                            if to_dir == CDir.NORTH:
-                                self._set_dust(x-2, y, z-1)
-                                self._set_dust(x-2, y, z-2)
-                                self._set_repeater(x-1, y, z-2, opposite_from_dir)
-                            elif to_dir == CDir.EAST:
-                                self._set_dust(x+1, y-1, z)
-                                self._set_repeater(x-1, y-1, z, to_dir)
-                            elif to_dir == CDir.SOUTH:
-                                self._set_dust(x-2, y, z+1)
-                                self._set_dust(x-2, y, z+2)
-                                self._set_repeater(x-1, y, z+2, opposite_from_dir)
+                            elif from_dir == CDir.WEST:
+                                if to_dir == CDir.NORTH:
+                                    self._set_dust(x-2, y, z-1)
+                                    self._set_dust(x-2, y, z-2)
+                                    self._set_repeater(x-1, y, z-2, opposite_from_dir)
+                                elif to_dir == CDir.EAST:
+                                    self._set_dust(x+1, y-1, z)
+                                    self._set_repeater(x-1, y-1, z, to_dir)
+                                elif to_dir == CDir.SOUTH:
+                                    self._set_dust(x-2, y, z+1)
+                                    self._set_dust(x-2, y, z+2)
+                                    self._set_repeater(x-1, y, z+2, opposite_from_dir)
