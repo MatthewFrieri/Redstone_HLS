@@ -6,12 +6,12 @@ Redstone High Level Synthesis (HLS) is a hardware synthesis project that program
 
 The FPGA is an n×m island-style architecture with configurable logic blocks (CLBs), programmable routing channels, switch boxes, connection blocks, and I/O blocks.
 
-![FPGA Board](minecraft_fpga.png)
-*Example 6×4 FPGA, ready to be programmed*
+![FPGA Board](assets/minecraft_fpga.png)
+_Example 6×4 FPGA, ready to be programmed_
 
 Each CLB can be configured to implement supported logic operations such as `AND`, `OR`, and `NOT`. The routing fabric connects CLBs to each other and to the FPGA's inputs and outputs through programmable switch and connection blocks.
 
-The FPGA architecture is represented by a *FPGA Object Notation (FON)*, allowing the placement and routing algorithms to operate on an abstract representation of the hardware before generating its physical Minecraft implementation.
+The FPGA architecture is represented by a _FPGA Object Notation (FON)_, allowing the placement and routing algorithms to operate on an abstract representation of the hardware before generating its physical Minecraft implementation.
 
 ### Placement & Routing
 
