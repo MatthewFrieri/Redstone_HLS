@@ -35,7 +35,7 @@ Y = Node(
         Node(NodeType.INPUT, io_id=0),
         shared,
     ),
-    io_id=0
+    io_id=2
 )
 Z = Node(
     NodeType.OUTPUT,
