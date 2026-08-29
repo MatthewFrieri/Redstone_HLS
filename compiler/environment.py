@@ -10,26 +10,26 @@ class Environment:
         self.values: dict[str, object] = {} 
 
     def get(self, name: Token) -> object:
-        if name.lexeme in self.values.keys():
-            return self.values[name.lexeme]
+        lexeme = name.lexeme
+        curr = self
+        while curr is not None:
+            if lexeme in curr.values:
+                return curr.values[lexeme]
+            curr = curr.enclosing
 
-        #Check if variable is defined in local scope recursively
-        if self.enclosing is not None:
-            return self.enclosing.get(name)
-
-        raise RuntimeError(f'[Line: {name.line}, Col: {name.col}] - Undefined variable {name.lexeme}.')
+        raise RuntimeError(f'[Line: {name.line}, Col: {name.col}] - Undefined variable {lexeme}.')
         
     def define(self, name: str, value: object) -> None:
         self.values[name] = value
 
     def assign(self, name: Token, value: object) -> None:
-        if name.lexeme in self.values.keys():
-            self.values[name.lexeme] = value
-            return
+        lexeme = name.lexeme
+        curr = self
+        while curr is not None:
+            if lexeme in curr.values:
+                curr.values[lexeme] = value
+                return
+            curr = curr.enclosing
 
-        if self.enclosing is not None: 
-            self.enclosing.assign(name, value)
-            return
-
-        raise RuntimeError(f'[Line: {name.line}, Col: {name.col}] - Undefined variable {name.lexeme}')
+        raise RuntimeError(f'[Line: {name.line}, Col: {name.col}] - Undefined variable {lexeme}')
 
